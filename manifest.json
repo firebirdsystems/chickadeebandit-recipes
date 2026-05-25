@@ -1,0 +1,31 @@
+{
+  "id": "recipes",
+  "name": "Recipes",
+  "version": "1.0.0",
+  "description": "A household recipe book with ingredients, steps, categories, ratings, and difficulty. Add any recipe's ingredients directly to your grocery list.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "storage": "db",
+  "category": "home",
+  "tags": ["recipes", "food", "cooking", "ingredients"],
+  "exports": ["recipes"],
+  "data_access": {
+    "reads": ["family.members"],
+    "writes": ["app.grocery.pending_items"]
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "resource_limits": {
+    "max_db_bytes": 104857600
+  },
+  "nav": {
+    "label": "Recipes"
+  },
+  "widget": {
+    "label": "Recipes",
+    "size": "small"
+  },
+  "icon": "📖"
+}
