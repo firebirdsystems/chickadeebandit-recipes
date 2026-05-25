@@ -23,68 +23,92 @@
       --green-bg: #f0fdf4; --red-bg: #fef2f2;
     }
 
+    html, body { height: 100%; overflow: hidden; }
     body {
       font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
       background: var(--bg); color: var(--text);
       font-size: var(--hub-font-size, 15px); line-height: 1.5;
-      min-height: 100vh;
     }
 
-    .app { max-width: 640px; margin: 0 auto; padding: 16px; }
+    /* ── Two-pane layout ── */
+    .layout { display: flex; height: 100%; overflow: hidden; }
 
-    /* ── Top bar ── */
-    .topbar {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    /* ── Left nav ── */
+    .nav-pane {
+      width: 200px; flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex; flex-direction: column;
     }
-    .topbar-back {
-      background: none; border: none; color: var(--muted); font-size: 1.1rem;
-      cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;
+    .nav-item {
+      display: block; width: 100%; text-align: left; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+      padding: 8px 16px; border: none; background: none;
+      font-size: 0.875rem; font-family: inherit; color: var(--text);
+      cursor: pointer; transition: background .12s;
     }
-    .topbar-back:hover { background: var(--border); color: var(--text); }
-    .topbar-title { font-size: 1.1rem; font-weight: 700; flex: 1; }
-    .topbar-actions { display: flex; gap: 6px; }
+    .nav-item:hover { background: var(--border); }
+    .nav-item.active { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+    .nav-item.active:hover { background: var(--accent-hover); }
+    .nav-section {
+      padding: 14px 16px 4px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .nav-divider { height: 1px; background: var(--border); margin: 6px 0; }
 
-    /* ── Search & filters ── */
-    .search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    /* ── Right content pane ── */
+    .content-pane { flex: 1; min-width: 0; overflow-y: auto; padding: 16px; }
+
+    /* ── Full-screen pane (form) ── */
+    .full-pane { flex: 1; overflow-y: auto; padding: 16px; }
+    .full-pane-inner { max-width: 640px; margin: 0 auto; }
+
+    /* ── Search row ── */
+    .search-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
     .search-input {
       flex: 1; border: 1.5px solid var(--border); border-radius: 8px;
       padding: 8px 12px; font-size: 0.9rem; background: var(--card);
       outline: none; font-family: inherit; color: var(--text);
     }
     .search-input:focus { border-color: var(--accent); }
-    .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .chip {
-      padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
-      border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
-      cursor: pointer; white-space: nowrap; transition: all .15s;
-    }
-    .chip.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
     .sort-select {
-      border: 1.5px solid var(--border); border-radius: 8px; padding: 4px 8px;
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 8px;
       font-size: 0.8rem; background: var(--card); color: var(--text);
-      outline: none; font-family: inherit; cursor: pointer; margin-left: auto;
+      outline: none; font-family: inherit; cursor: pointer; flex-shrink: 0;
     }
 
     /* ── Recipe cards ── */
     .recipe-grid { display: flex; flex-direction: column; gap: 8px; }
     .recipe-card {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 14px 16px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
-      box-shadow: var(--shadow);
+      padding: 12px 14px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+      box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 10px;
     }
     .recipe-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-    .recipe-card-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-    .recipe-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .recipe-card-body { flex: 1; min-width: 0; }
+    .recipe-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .recipe-card-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
     .badge {
       display: inline-block; padding: 2px 7px; border-radius: 999px;
-      font-size: 0.72rem; font-weight: 700; color: white;
+      font-size: 0.7rem; font-weight: 700; color: white;
     }
     .badge-easy   { background: var(--green); }
     .badge-medium { background: var(--amber); }
     .badge-hard   { background: var(--red); }
     .badge-cat    { background: #6366f1; }
-    .meta-text { font-size: 0.8rem; color: var(--muted); }
-    .stars { color: #f59e0b; font-size: 0.85rem; letter-spacing: -.05em; }
+    .meta-text { font-size: 0.78rem; color: var(--muted); }
+    .stars { color: #f59e0b; font-size: 0.82rem; letter-spacing: -.05em; }
+
+    /* ── Heart button ── */
+    .heart-btn {
+      background: none; border: none; font-size: 1.15rem; line-height: 1;
+      cursor: pointer; padding: 4px 3px; border-radius: 6px; flex-shrink: 0;
+      color: #d1d5db; transition: color .12s, background .12s;
+    }
+    .heart-btn:hover { color: #f43f5e; background: #fff1f2; }
+    .heart-btn.on { color: #f43f5e; }
 
     /* ── FAB ── */
     .fab {
@@ -93,34 +117,38 @@
       background: var(--accent); color: var(--accent-fg);
       border: none; font-size: 1.5rem; cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,.2); transition: background .15s, transform .1s;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: center; z-index: 50;
     }
     .fab:hover { background: var(--accent-hover); transform: scale(1.05); }
 
     /* ── Detail view ── */
-    .detail-meta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
-    .detail-section { margin-top: 18px; }
-    .detail-section h3 { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
-    .ingredient-list { list-style: none; }
-    .ingredient-list li { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
-    .ingredient-list li:last-child { border-bottom: none; }
-    .step-list { list-style: none; counter-reset: steps; }
-    .step-list li { counter-increment: steps; display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
-    .step-list li:last-child { border-bottom: none; }
-    .step-list li::before {
-      content: counter(steps); min-width: 24px; height: 24px; border-radius: 50%;
-      background: var(--accent); color: var(--accent-fg); display: flex;
-      align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;
-      flex-shrink: 0; margin-top: 1px;
+    .detail-topbar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
     }
+    .detail-title { font-size: 1.3rem; font-weight: 700; flex: 1; }
+    .detail-actions { display: flex; gap: 6px; }
+    .detail-meta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 10px 0 16px; }
+    .detail-section { margin-top: 20px; }
+    .detail-section h3 {
+      font-size: 0.72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px;
+    }
+    .ingredient-list { list-style: none; }
+    .ingredient-list li {
+      padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem;
+    }
+    .ingredient-list li:last-child { border-bottom: none; }
     .source-link { font-size: 0.85rem; color: #2563eb; word-break: break-all; }
     .notes-text { font-size: 0.9rem; color: var(--muted); font-style: italic; white-space: pre-wrap; }
+    .steps-text { font-size: 0.92rem; white-space: pre-wrap; line-height: 1.65; }
     .detail-footer {
       display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px;
       padding-top: 16px; border-top: 1px solid var(--border);
     }
+
+    /* ── Buttons ── */
     .btn {
-      padding: 9px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
       cursor: pointer; border: none; transition: all .15s; font-family: inherit;
     }
     .btn-primary { background: var(--accent); color: var(--accent-fg); }
@@ -132,22 +160,41 @@
     .btn-ghost:hover { border-color: var(--text); color: var(--text); }
     .btn-danger { background: var(--red-bg); color: var(--red); border: 1.5px solid #fecaca; }
     .btn-danger:hover { background: #fee2e2; }
+    .back-btn {
+      background: none; border: none; color: var(--muted); font-size: 1.1rem;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; display: none;
+    }
+    .back-btn:hover { background: var(--border); color: var(--text); }
 
     /* ── Form ── */
+    .form-topbar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .form-back {
+      background: none; border: none; color: var(--muted); font-size: 1.1rem;
+      cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;
+    }
+    .form-back:hover { background: var(--border); color: var(--text); }
+    .form-title { font-size: 1.1rem; font-weight: 700; }
     .form-card {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
       padding: 20px; box-shadow: var(--shadow);
     }
     .field { margin-bottom: 14px; }
-    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    label {
+      display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted);
+      margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em;
+    }
     input[type=text], input[type=number], textarea, select {
       width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
       padding: 8px 12px; font-size: 0.92rem; font-family: inherit; color: var(--text);
       background: var(--card); outline: none; transition: border-color .15s;
     }
-    input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
     textarea { resize: vertical; min-height: 72px; }
-
+    textarea.tall { min-height: 160px; }
     .difficulty-group { display: flex; gap: 8px; }
     .diff-btn {
       flex: 1; padding: 7px; border-radius: 8px; border: 1.5px solid var(--border);
@@ -157,27 +204,11 @@
     .diff-btn.easy.active  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
     .diff-btn.medium.active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
     .diff-btn.hard.active  { background: var(--red-bg);   border-color: var(--red);   color: var(--red); }
-
     .stars-input { display: flex; gap: 4px; }
     .star-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #d1d5db; padding: 0 2px; transition: color .1s; }
     .star-btn.on { color: #f59e0b; }
-
-    .ing-row, .step-row {
-      display: flex; gap: 6px; align-items: flex-start; margin-bottom: 6px;
-    }
-    .ing-amount { width: 72px; flex-shrink: 0; }
-    .ing-unit   { width: 80px; flex-shrink: 0; }
-    .ing-name   { flex: 1; }
-    .step-row textarea { flex: 1; min-height: 54px; }
     .row-del { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 8px 6px; border-radius: 6px; flex-shrink: 0; }
     .row-del:hover { background: var(--red-bg); color: var(--red); }
-    .add-row-btn {
-      background: none; border: 1.5px dashed var(--border); border-radius: 8px;
-      color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 7px 12px;
-      cursor: pointer; width: 100%; transition: all .15s; font-family: inherit;
-    }
-    .add-row-btn:hover { border-color: var(--accent); color: var(--accent); }
-
     .form-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
     /* ── Toast ── */
@@ -208,37 +239,61 @@
     .empty { text-align: center; padding: 48px 16px; color: var(--muted); }
     .empty-icon { font-size: 3rem; margin-bottom: 10px; }
     .loading { text-align: center; padding: 48px; color: var(--muted); }
+
+    /* ── Mobile ── */
+    @media (max-width: 580px) {
+      .layout { flex-direction: column; }
+      .nav-pane {
+        width: 100%; height: auto; flex-direction: row; flex-shrink: 0;
+        overflow-x: auto; overflow-y: hidden;
+        border-right: none; border-bottom: 1px solid var(--border);
+        padding: 8px; gap: 5px;
+      }
+      .nav-section, .nav-divider { display: none; }
+      .nav-item {
+        width: auto; flex-shrink: 0; white-space: nowrap;
+        padding: 5px 12px; border-radius: 999px;
+        border: 1.5px solid var(--border);
+        font-size: 0.82rem;
+      }
+      .nav-item.active {
+        background: var(--accent); color: var(--accent-fg);
+        border-color: var(--accent); font-weight: 600;
+      }
+      .nav-item:hover { background: var(--border); }
+      .nav-item.active:hover { background: var(--accent-hover); }
+      .layout.detail-mode .nav-pane { display: none; }
+      .back-btn { display: block; }
+      .fab { bottom: 16px; right: 16px; }
+    }
   </style>
-<base href="/run/recipes/">
+  <base href="/run/recipes/">
 </head>
 <body>
-<div class="app">
-  <div id="root"><div class="loading">Loading…</div></div>
-</div>
+<div id="layout" class="layout"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { esc, hubConfirm, crossWrite } from "/hub-sdk.js";
-import { formatIngredient, formatTime, difficultyLabel, difficultyColor, starDisplay, sortRecipes } from "./logic.js";
+import { formatTime, difficultyLabel, starDisplay, sortRecipes } from "./logic.js";
 
-const DB      = window.__DB_URL         ?? "";
-const CONTEXT = window.__CONTEXT_URL    ?? "";
-const STORE   = window.__STORE_URL      ?? "";
-const ME      = window.__CURRENT_MEMBER ?? null;
+const DB    = window.__DB_URL         ?? "";
+const STORE = window.__STORE_URL      ?? "";
+const ME    = window.__CURRENT_MEMBER ?? null;
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let view = "list"; // "list" | "detail" | "form"
-let recipes = [], categories = [];
-let currentRecipe = null; // full recipe with ingredients + steps
-let editingId = null;
-let filterCat = "", filterDiff = "", sortBy = "title";
-let searchQ = "";
+let view      = "browse"; // "browse" | "form"
+let rightView = "list";   // "list"   | "detail"  (only when view="browse")
 
-// Form state
-let formIngredients = [{ amount: "", unit: "", name: "" }];
-let formSteps       = [{ instruction: "" }];
-let formDifficulty  = "medium";
-let formRating      = 0;
+let recipes = [], categories = [];
+let currentRecipe = null;
+let editingId     = null;
+let navFilter     = "all"; // "all" | "top_rated" | "favorites" | "cat:{id}" | "uncategorized"
+let searchQ       = "";
+let sortBy        = "title"; // "title" | "time"
+
+let formDifficulty = "medium";
+let formRating     = 0;
 
 // ── DB ────────────────────────────────────────────────────────────────────────
 async function db(sql, params = []) {
@@ -258,18 +313,39 @@ async function loadAll() {
     db(`SELECT * FROM recipes ORDER BY title`),
     db(`SELECT * FROM categories ORDER BY name`),
   ]);
-  recipes = rRes.rows;
+  recipes    = rRes.rows;
   categories = cRes.rows;
 }
 
 async function loadRecipeFull(id) {
-  const [rRes, iRes, sRes] = await Promise.all([
-    db(`SELECT * FROM recipes WHERE id = ?`, [id]),
-    db(`SELECT * FROM ingredients WHERE recipe_id = ? ORDER BY sort_order`, [id]),
-    db(`SELECT * FROM steps WHERE recipe_id = ? ORDER BY sort_order`, [id]),
-  ]);
-  if (!rRes.rows[0]) return null;
-  return { ...rRes.rows[0], ingredients: iRes.rows, steps: sRes.rows };
+  const { rows } = await db(`SELECT * FROM recipes WHERE id = ?`, [id]);
+  return rows[0] ?? null;
+}
+
+// ── Filtered recipe list ──────────────────────────────────────────────────────
+function getFiltered() {
+  let list = [...recipes];
+
+  if      (navFilter === "top_rated")    list = list.filter(r => r.rating);
+  else if (navFilter === "favorites")    list = list.filter(r => !!r.is_favorite);
+  else if (navFilter === "uncategorized") list = list.filter(r => !r.category_id);
+  else if (navFilter.startsWith("cat:")) {
+    const catId = navFilter.slice(4);
+    list = list.filter(r => r.category_id === catId);
+  }
+
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    list = list.filter(r => r.title.toLowerCase().includes(q));
+  }
+
+  if (navFilter === "top_rated") {
+    list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.title.localeCompare(b.title));
+  } else {
+    list = sortRecipes(list, sortBy);
+  }
+
+  return list;
 }
 
 // ── KV export sync ────────────────────────────────────────────────────────────
@@ -277,18 +353,12 @@ async function syncExport() {
   if (!STORE) return;
   try {
     const { rows } = await db(`SELECT * FROM recipes ORDER BY title`);
-    const exported = [];
-    for (const r of rows) {
-      const { rows: ings } = await db(
-        `SELECT name, amount, unit FROM ingredients WHERE recipe_id = ? ORDER BY sort_order`, [r.id]
-      );
-      exported.push({
-        id: r.id, title: r.title, category_id: r.category_id,
-        difficulty: r.difficulty, servings: r.servings,
-        total_time_mins: r.total_time_mins, rating: r.rating,
-        ingredients: ings,
-      });
-    }
+    const exported = rows.map(r => ({
+      id: r.id, title: r.title, category_id: r.category_id,
+      difficulty: r.difficulty, servings: r.servings,
+      total_time_mins: r.total_time_mins, rating: r.rating,
+      ingredients_text: r.ingredients_text ?? "",
+    }));
     await fetch(STORE, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: "recipes", value: JSON.stringify(exported) }),
@@ -298,16 +368,15 @@ async function syncExport() {
 
 // ── Grocery integration ───────────────────────────────────────────────────────
 async function addToGrocery(recipe) {
-  if (!recipe.ingredients?.length) {
-    showToast("No ingredients to add", "error"); return;
-  }
-  const ops = recipe.ingredients.map(ing => ({
+  const items = (recipe.ingredients_text ?? "").split("\n").map(s => s.trim()).filter(Boolean);
+  if (!items.length) { showToast("No ingredients to add", "error"); return; }
+  const ops = items.map(name => ({
     op: "array_append", path: "items",
-    value: { name: formatIngredient(ing), addedBy: recipe.title },
+    value: { name, addedBy: recipe.title },
   }));
   try {
     await crossWrite("grocery", "pending_items", ops);
-    showToast(`${recipe.ingredients.length} item${recipe.ingredients.length !== 1 ? "s" : ""} added to grocery list`);
+    showToast(`${items.length} item${items.length !== 1 ? "s" : ""} added to grocery list`);
   } catch {
     showToast("Grocery app not available", "error");
   }
@@ -329,8 +398,10 @@ function openCategoryModal() {
           </div>`).join("") || '<p style="color:var(--muted);font-size:0.85rem">No categories yet</p>'}
       </div>
       <div style="display:flex;gap:6px;align-items:center">
-        <input id="new-cat-name" type="text" placeholder="Category name" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:0.9rem;font-family:inherit;color:var(--text);background:var(--card);outline:none" />
-        <input id="new-cat-color" type="color" value="#6366f1" style="width:36px;height:36px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;padding:2px" />
+        <input id="new-cat-name" type="text" placeholder="Category name"
+          style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:0.9rem;font-family:inherit;color:var(--text);background:var(--card);outline:none" />
+        <input id="new-cat-color" type="color" value="#6366f1"
+          style="width:36px;height:36px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;padding:2px" />
         <button class="btn btn-primary" style="padding:7px 12px" onclick="addCategory()">Add</button>
       </div>
       <div class="modal-actions">
@@ -353,7 +424,6 @@ window.addCategory = async function() {
   await loadAll();
   document.querySelector(".modal-backdrop")?.remove();
   openCategoryModal();
-  renderForm();
 };
 
 window.deleteCategory = async function(id) {
@@ -363,8 +433,18 @@ window.deleteCategory = async function(id) {
   await loadAll();
   document.querySelector(".modal-backdrop")?.remove();
   openCategoryModal();
-  renderForm();
+  render();
 };
+
+// ── Favorite toggle ───────────────────────────────────────────────────────────
+async function toggleFavorite(id, currentVal) {
+  const newVal = currentVal ? 0 : 1;
+  await db(`UPDATE recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
+  const r = recipes.find(r => r.id === id);
+  if (r) r.is_favorite = newVal;
+  if (currentRecipe?.id === id) currentRecipe.is_favorite = newVal;
+  render();
+}
 
 // ── Recipe CRUD ───────────────────────────────────────────────────────────────
 async function saveRecipe() {
@@ -375,59 +455,45 @@ async function saveRecipe() {
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
 
   const now = new Date().toISOString();
-  const ings = formIngredients.filter(i => i.name.trim());
-  const steps = formSteps.filter(s => s.instruction.trim());
 
   try {
     const data = {
       title,
-      description: document.getElementById("f-desc")?.value.trim() ?? "",
-      category_id: document.getElementById("f-cat")?.value || null,
-      difficulty:  formDifficulty,
-      servings:    parseInt(document.getElementById("f-servings")?.value) || 4,
-      total_time_mins: parseInt(document.getElementById("f-time")?.value) || null,
-      source:      document.getElementById("f-source")?.value.trim() ?? "",
-      rating:      formRating || null,
-      notes:       document.getElementById("f-notes")?.value.trim() ?? "",
+      description:      document.getElementById("f-desc")?.value.trim()   ?? "",
+      category_id:      document.getElementById("f-cat")?.value            || null,
+      difficulty:       formDifficulty,
+      servings:         parseInt(document.getElementById("f-servings")?.value) || 4,
+      total_time_mins:  parseInt(document.getElementById("f-time")?.value)     || null,
+      source:           document.getElementById("f-source")?.value.trim()  ?? "",
+      rating:           formRating || null,
+      ingredients_text: document.getElementById("f-ings")?.value           ?? "",
+      steps_text:       document.getElementById("f-steps")?.value          ?? "",
+      notes:            document.getElementById("f-notes")?.value.trim()   ?? "",
     };
 
     if (editingId) {
-      await db(`UPDATE recipes SET title=?,description=?,category_id=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,notes=?,updated_at=? WHERE id=?`,
+      await db(
+        `UPDATE recipes SET title=?,description=?,category_id=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
         [data.title, data.description, data.category_id, data.difficulty, data.servings,
-         data.total_time_mins, data.source, data.rating, data.notes, now, editingId]);
-      await db(`DELETE FROM ingredients WHERE recipe_id = ?`, [editingId]);
-      await db(`DELETE FROM steps WHERE recipe_id = ?`, [editingId]);
-      for (let i = 0; i < ings.length; i++) {
-        await db(`INSERT INTO ingredients (id, recipe_id, name, amount, unit, sort_order) VALUES (?, ?, ?, ?, ?, ?)`,
-          [crypto.randomUUID(), editingId, ings[i].name, ings[i].amount, ings[i].unit, i]);
-      }
-      for (let i = 0; i < steps.length; i++) {
-        await db(`INSERT INTO steps (id, recipe_id, instruction, sort_order) VALUES (?, ?, ?, ?)`,
-          [crypto.randomUUID(), editingId, steps[i].instruction, i]);
-      }
+         data.total_time_mins, data.source, data.rating, data.ingredients_text,
+         data.steps_text, data.notes, now, editingId]);
     } else {
-      const id = crypto.randomUUID();
-      const who = ME?.id ?? "demo";
+      const id     = crypto.randomUUID();
+      const who    = ME?.id   ?? "demo";
       const whoName = ME?.name ?? "Demo";
-      await db(`INSERT INTO recipes (id, title, description, category_id, difficulty, servings, total_time_mins, source, rating, notes, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, data.title, data.description, data.category_id, data.difficulty, data.servings,
-         data.total_time_mins, data.source, data.rating, data.notes, who, whoName, now, now]);
-      for (let i = 0; i < ings.length; i++) {
-        await db(`INSERT INTO ingredients (id, recipe_id, name, amount, unit, sort_order) VALUES (?, ?, ?, ?, ?, ?)`,
-          [crypto.randomUUID(), id, ings[i].name, ings[i].amount, ings[i].unit, i]);
-      }
-      for (let i = 0; i < steps.length; i++) {
-        await db(`INSERT INTO steps (id, recipe_id, instruction, sort_order) VALUES (?, ?, ?, ?)`,
-          [crypto.randomUUID(), id, steps[i].instruction, i]);
-      }
+      await db(
+        `INSERT INTO recipes (id,title,description,category_id,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
+        [id, data.title, data.description, data.category_id, data.difficulty,
+         data.servings, data.total_time_mins, data.source, data.rating,
+         data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now]);
       editingId = id;
     }
 
     await Promise.all([loadAll(), syncExport()]);
     currentRecipe = await loadRecipeFull(editingId);
-    view = "detail";
+    view = "browse"; rightView = "detail";
     render();
-  } catch (e) {
+  } catch {
     showToast("Save failed — try again", "error");
     if (btn) { btn.disabled = false; btn.textContent = "Save"; }
   }
@@ -435,109 +501,98 @@ async function saveRecipe() {
 
 async function deleteRecipe(id) {
   if (!await hubConfirm({ message: "Delete this recipe?", confirmLabel: "Delete", destructive: true })) return;
-  await db(`DELETE FROM ingredients WHERE recipe_id = ?`, [id]);
-  await db(`DELETE FROM steps WHERE recipe_id = ?`, [id]);
   await db(`DELETE FROM recipes WHERE id = ?`, [id]);
   await Promise.all([loadAll(), syncExport()]);
   currentRecipe = null;
-  view = "list";
+  rightView = "list";
   render();
 }
 
-// ── Form helpers ──────────────────────────────────────────────────────────────
-function addIngredientRow(ing = { amount: "", unit: "", name: "" }) {
-  formIngredients.push(ing);
-}
-function removeIngredientRow(i) {
-  formIngredients.splice(i, 1);
-  if (!formIngredients.length) formIngredients.push({ amount: "", unit: "", name: "" });
-}
-function addStepRow() { formSteps.push({ instruction: "" }); }
-function removeStepRow(i) {
-  formSteps.splice(i, 1);
-  if (!formSteps.length) formSteps.push({ instruction: "" });
-}
-
-function captureFormState() {
-  formIngredients = Array.from(document.querySelectorAll(".ing-row")).map(row => ({
-    amount: row.querySelector(".ing-amount")?.value.trim() ?? "",
-    unit:   row.querySelector(".ing-unit")?.value.trim()   ?? "",
-    name:   row.querySelector(".ing-name")?.value.trim()   ?? "",
-  }));
-  formSteps = Array.from(document.querySelectorAll(".step-row textarea")).map(el => ({
-    instruction: el.value.trim(),
-  }));
-}
-
-// ── Rendering ─────────────────────────────────────────────────────────────────
-function render() {
-  if (view === "list")   renderList();
-  else if (view === "detail") renderDetail();
-  else if (view === "form")   renderForm();
-}
-
-function renderList() {
-  let filtered = recipes;
-  if (searchQ) filtered = filtered.filter(r => r.title.toLowerCase().includes(searchQ.toLowerCase()));
-  if (filterCat)  filtered = filtered.filter(r => r.category_id === filterCat);
-  if (filterDiff) filtered = filtered.filter(r => r.difficulty  === filterDiff);
-  filtered = sortRecipes(filtered, sortBy);
-
-  const catOptions = categories.map(c =>
-    `<button class="chip${filterCat === c.id ? " active" : ""}" onclick="setFilterCat('${c.id}')">${esc(c.name)}</button>`
+// ── HTML builders ─────────────────────────────────────────────────────────────
+function navHtml() {
+  function item(id, label) {
+    return `<button class="nav-item${navFilter === id ? " active" : ""}" onclick="setNav('${id}')">${esc(label)}</button>`;
+  }
+  const catItems = categories.map(c =>
+    `<button class="nav-item${navFilter === "cat:" + c.id ? " active" : ""}" onclick="setNav('cat:${esc(c.id)}')"
+       title="${esc(c.name)}">${esc(c.name)}</button>`
   ).join("");
 
-  const diffChips = ["easy", "medium", "hard"].map(d =>
-    `<button class="chip${filterDiff === d ? " active" : ""}" onclick="setFilterDiff('${d}')">${difficultyLabel(d)}</button>`
-  ).join("");
+  return `
+    ${item("all",       "All Recipes")}
+    ${item("top_rated", "Top Rated")}
+    ${item("favorites", "Favorites")}
+    <div class="nav-divider"></div>
+    <div class="nav-section">Categories</div>
+    ${catItems}
+    ${item("uncategorized", "Uncategorized")}
+  `;
+}
+
+function listHtml() {
+  const filtered = getFiltered();
+
+  const showSort = navFilter !== "top_rated";
+  const sortSelect = showSort ? `
+    <select class="sort-select" onchange="setSortBy(this.value)">
+      <option value="title"${sortBy === "title" ? " selected" : ""}>A–Z</option>
+      <option value="time"${sortBy  === "time"  ? " selected" : ""}>Quickest</option>
+    </select>` : "";
 
   const cards = filtered.length ? filtered.map(r => {
     const cat = categories.find(c => c.id === r.category_id);
+    const fav = !!r.is_favorite;
     return `
       <div class="recipe-card" onclick="openDetail('${r.id}')">
-        <div class="recipe-card-title">${esc(r.title)}</div>
-        <div class="recipe-card-meta">
-          <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
-          ${cat ? `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>` : ""}
-          ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
-          ${r.servings ? `<span class="meta-text">👥 ${r.servings}</span>` : ""}
-          ${r.rating ? `<span class="stars">${starDisplay(r.rating)}</span>` : ""}
+        <div class="recipe-card-body">
+          <div class="recipe-card-title">${esc(r.title)}</div>
+          <div class="recipe-card-meta">
+            <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
+            ${cat ? `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>` : ""}
+            ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
+            ${r.servings        ? `<span class="meta-text">👥 ${r.servings}</span>` : ""}
+            ${r.rating          ? `<span class="stars">${starDisplay(r.rating)}</span>` : ""}
+          </div>
         </div>
+        <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
+          onclick="event.stopPropagation();doToggleFav('${r.id}',${fav ? 1 : 0})">♥</button>
       </div>`;
-  }).join("") : `<div class="empty"><div class="empty-icon">📖</div><p>${searchQ || filterCat || filterDiff ? "No recipes match your filters." : "No recipes yet — tap + to add your first."}</p></div>`;
+  }).join("") : `
+    <div class="empty">
+      <div class="empty-icon">📖</div>
+      <p>${searchQ ? "No recipes match your search." : navFilter === "favorites" ? "No favorites yet — click ♥ on a recipe." : "No recipes here yet."}</p>
+    </div>`;
 
-  document.getElementById("root").innerHTML = `
+  return `
     <div class="search-row">
-      <input class="search-input" type="text" placeholder="Search recipes…" value="${esc(searchQ)}"
-        oninput="setSearch(this.value)" autocomplete="off" />
-    </div>
-    <div class="filter-row">
-      <button class="chip${!filterCat && !filterDiff ? " active" : ""}" onclick="clearFilters()">All</button>
-      ${catOptions}
-      ${diffChips}
-      <select class="sort-select" onchange="setSortBy(this.value)">
-        <option value="title"${sortBy==="title"?" selected":""}>A–Z</option>
-        <option value="rating"${sortBy==="rating"?" selected":""}>Top rated</option>
-        <option value="time"${sortBy==="time"?" selected":""}>Quickest</option>
-      </select>
+      <input class="search-input" type="text" placeholder="Search recipes…"
+        value="${esc(searchQ)}" oninput="setSearch(this.value)" autocomplete="off" />
+      ${sortSelect}
     </div>
     <div class="recipe-grid">${cards}</div>
     <button class="fab" onclick="openForm()" title="Add recipe">+</button>`;
 }
 
-function renderDetail() {
+function detailHtml() {
   const r = currentRecipe;
-  if (!r) { view = "list"; render(); return; }
-  const cat = categories.find(c => c.id === r.category_id);
+  if (!r) return "";
+  const cat   = categories.find(c => c.id === r.category_id);
   const isUrl = r.source?.startsWith("http");
+  const fav   = !!r.is_favorite;
+  const ingredientLines = (r.ingredients_text ?? "").split("\n").map(s => s.trim()).filter(Boolean);
+  const hasIngredients  = ingredientLines.length > 0;
+  const hasSteps        = (r.steps_text ?? "").trim().length > 0;
 
-  document.getElementById("root").innerHTML = `
-    <div class="topbar">
-      <button class="topbar-back" onclick="goList()">←</button>
-      <span class="topbar-title">${esc(r.title)}</span>
-      <div class="topbar-actions">
-        <button class="btn btn-ghost" style="padding:7px 12px;font-size:0.85rem" onclick="openEdit('${r.id}')">Edit</button>
-        <button class="btn btn-danger" style="padding:7px 12px;font-size:0.85rem" onclick="doDelete('${r.id}')">Delete</button>
+  return `
+    <div class="detail-topbar">
+      <button class="back-btn" onclick="goList()">←</button>
+      <span class="detail-title">${esc(r.title)}</span>
+      <div class="detail-actions">
+        <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
+          style="font-size:1.3rem;padding:6px 5px"
+          onclick="doToggleFav('${r.id}',${fav ? 1 : 0})">♥</button>
+        <button class="btn btn-ghost" onclick="openEdit('${r.id}')">Edit</button>
+        <button class="btn btn-danger" onclick="doDelete('${r.id}')">Delete</button>
       </div>
     </div>
 
@@ -545,27 +600,25 @@ function renderDetail() {
       <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
       ${cat ? `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>` : ""}
       ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
-      ${r.servings ? `<span class="meta-text">👥 ${r.servings} servings</span>` : ""}
-      ${r.rating ? `<span class="stars" title="${r.rating}/5 stars">${starDisplay(r.rating)}</span>` : ""}
+      ${r.servings        ? `<span class="meta-text">👥 ${r.servings} servings</span>` : ""}
+      ${r.rating          ? `<span class="stars" title="${r.rating}/5 stars">${starDisplay(r.rating)}</span>` : ""}
     </div>
 
     ${r.description ? `<p style="font-size:0.92rem;color:var(--muted);margin-bottom:8px">${esc(r.description)}</p>` : ""}
-    ${r.source ? `<p><a class="source-link" href="${isUrl ? esc(r.source) : "#"}" ${isUrl ? 'target="_blank" rel="noopener"' : ""}>${esc(r.source)}</a></p>` : ""}
+    ${r.source      ? `<p><a class="source-link" href="${isUrl ? esc(r.source) : "#"}" ${isUrl ? 'target="_blank" rel="noopener"' : ""}>${esc(r.source)}</a></p>` : ""}
 
-    ${r.ingredients.length ? `
+    ${hasIngredients ? `
       <div class="detail-section">
         <h3>Ingredients</h3>
         <ul class="ingredient-list">
-          ${r.ingredients.map(i => `<li>${esc(formatIngredient(i))}</li>`).join("")}
+          ${ingredientLines.map(line => `<li>${esc(line)}</li>`).join("")}
         </ul>
       </div>` : ""}
 
-    ${r.steps.length ? `
+    ${hasSteps ? `
       <div class="detail-section">
         <h3>Steps</h3>
-        <ol class="step-list">
-          ${r.steps.map(s => `<li><span>${esc(s.instruction)}</span></li>`).join("")}
-        </ol>
+        <p class="steps-text">${esc(r.steps_text)}</p>
       </div>` : ""}
 
     ${r.notes ? `
@@ -575,42 +628,31 @@ function renderDetail() {
       </div>` : ""}
 
     <div class="detail-footer">
-      ${r.ingredients.length ? `<button class="btn btn-amber" id="grocery-btn" onclick="doAddToGrocery()">🛒 Add to Grocery</button>` : ""}
+      ${hasIngredients ? `<button class="btn btn-amber" id="grocery-btn" onclick="doAddToGrocery()">🛒 Add to Grocery</button>` : ""}
     </div>`;
 }
 
-function renderForm() {
-  const editing = !!editingId;
+function formHtml() {
+  const editing    = !!editingId;
   const catOptions = `<option value="">Uncategorized</option>` +
-    categories.map(c => `<option value="${esc(c.id)}"${(editing && currentRecipe?.category_id === c.id) ? " selected" : ""}>${esc(c.name)}</option>`).join("");
-
-  const ingsHtml = formIngredients.map((ing, i) => `
-    <div class="ing-row">
-      <input class="ing-amount" type="text" placeholder="Qty" value="${esc(ing.amount)}" oninput="captureIng(${i},'amount',this.value)" />
-      <input class="ing-unit" type="text" placeholder="Unit" value="${esc(ing.unit)}" oninput="captureIng(${i},'unit',this.value)" />
-      <input class="ing-name" type="text" placeholder="Ingredient" value="${esc(ing.name)}" oninput="captureIng(${i},'name',this.value)" />
-      <button class="row-del" onclick="removeIng(${i})">✕</button>
-    </div>`).join("");
-
-  const stepsHtml = formSteps.map((s, i) => `
-    <div class="step-row">
-      <textarea placeholder="Step ${i + 1}…" oninput="captureStep(${i},this.value)">${esc(s.instruction)}</textarea>
-      <button class="row-del" onclick="removeStep(${i})">✕</button>
-    </div>`).join("");
+    categories.map(c =>
+      `<option value="${esc(c.id)}"${editing && currentRecipe?.category_id === c.id ? " selected" : ""}>${esc(c.name)}</option>`
+    ).join("");
 
   const starsHtml = [1,2,3,4,5].map(n =>
     `<button class="star-btn${formRating >= n ? " on" : ""}" onclick="setRating(${n})">★</button>`
   ).join("");
 
-  document.getElementById("root").innerHTML = `
-    <div class="topbar">
-      <button class="topbar-back" onclick="cancelForm()">←</button>
-      <span class="topbar-title">${editing ? "Edit Recipe" : "New Recipe"}</span>
+  return `
+    <div class="form-topbar">
+      <button class="form-back" onclick="cancelForm()">←</button>
+      <span class="form-title">${editing ? "Edit Recipe" : "New Recipe"}</span>
     </div>
     <div class="form-card">
       <div class="field">
         <label>Title *</label>
-        <input id="f-title" type="text" placeholder="Recipe title" value="${editing ? esc(currentRecipe?.title ?? "") : ""}" />
+        <input id="f-title" type="text" placeholder="Recipe title"
+          value="${editing ? esc(currentRecipe?.title ?? "") : ""}" />
       </div>
       <div class="field">
         <label>Description</label>
@@ -618,16 +660,19 @@ function renderForm() {
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="field" style="flex:1;min-width:140px">
-          <label>Category <button onclick="openCats()" style="font-size:0.7rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600">+ Manage</button></label>
+          <label>Category
+            <button onclick="openCats()" style="font-size:0.7rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600">+ Manage</button>
+          </label>
           <select id="f-cat">${catOptions}</select>
         </div>
-        <div class="field" style="flex:1;min-width:120px">
+        <div class="field" style="flex:1;min-width:110px">
           <label>Servings</label>
           <input id="f-servings" type="number" min="1" value="${editing ? (currentRecipe?.servings ?? 4) : 4}" />
         </div>
-        <div class="field" style="flex:1;min-width:120px">
-          <label>Total time (min)</label>
-          <input id="f-time" type="number" min="1" placeholder="e.g. 45" value="${editing ? (currentRecipe?.total_time_mins ?? "") : ""}" />
+        <div class="field" style="flex:1;min-width:110px">
+          <label>Time (min)</label>
+          <input id="f-time" type="number" min="1" placeholder="e.g. 45"
+            value="${editing ? (currentRecipe?.total_time_mins ?? "") : ""}" />
         </div>
       </div>
       <div class="field">
@@ -640,87 +685,97 @@ function renderForm() {
       </div>
       <div class="field">
         <label>Rating</label>
-        <div class="stars-input">${starsHtml}<button class="row-del" onclick="setRating(0)" title="Clear rating" style="font-size:0.8rem">✕</button></div>
+        <div class="stars-input">
+          ${starsHtml}
+          <button class="row-del" onclick="setRating(0)" title="Clear rating" style="font-size:0.8rem">✕</button>
+        </div>
       </div>
       <div class="field">
         <label>Source</label>
-        <input id="f-source" type="text" placeholder="URL or book name" value="${editing ? esc(currentRecipe?.source ?? "") : ""}" />
+        <input id="f-source" type="text" placeholder="URL or book name"
+          value="${editing ? esc(currentRecipe?.source ?? "") : ""}" />
+      </div>
+      <div class="field">
+        <label>Ingredients — one per line</label>
+        <textarea id="f-ings" class="tall"
+          placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs">${editing ? esc(currentRecipe?.ingredients_text ?? "") : ""}</textarea>
+      </div>
+      <div class="field">
+        <label>Steps</label>
+        <textarea id="f-steps" class="tall"
+          placeholder="Write out the steps…">${editing ? esc(currentRecipe?.steps_text ?? "") : ""}</textarea>
       </div>
       <div class="field">
         <label>Notes</label>
-        <textarea id="f-notes" placeholder="Tips, variations…">${editing ? esc(currentRecipe?.notes ?? "") : ""}</textarea>
+        <textarea id="f-notes"
+          placeholder="Tips, variations, substitutions…">${editing ? esc(currentRecipe?.notes ?? "") : ""}</textarea>
       </div>
-
-      <div class="field">
-        <label>Ingredients</label>
-        <div id="ing-list">${ingsHtml}</div>
-        <button class="add-row-btn" onclick="addIng()">+ Add ingredient</button>
-      </div>
-
-      <div class="field">
-        <label>Steps</label>
-        <div id="step-list">${stepsHtml}</div>
-        <button class="add-row-btn" onclick="addStep()">+ Add step</button>
-      </div>
-
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="cancelForm()">Cancel</button>
         <button class="btn btn-primary" onclick="doSave()">Save</button>
       </div>
     </div>`;
+}
 
-  document.getElementById("f-title")?.focus();
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const el = document.getElementById("layout");
+  if (!el) return;
+
+  if (view === "form") {
+    el.className = "layout";
+    el.innerHTML = `<div class="full-pane"><div class="full-pane-inner">${formHtml()}</div></div>`;
+    document.getElementById("f-title")?.focus();
+    return;
+  }
+
+  const inDetail = rightView === "detail" && !!currentRecipe;
+  el.className = `layout${inDetail ? " detail-mode" : ""}`;
+  el.innerHTML = `
+    <nav class="nav-pane">${navHtml()}</nav>
+    <div class="content-pane">${inDetail ? detailHtml() : listHtml()}</div>
+  `;
 }
 
 // ── Window globals ────────────────────────────────────────────────────────────
 window.openDetail = async function(id) {
   currentRecipe = await loadRecipeFull(id);
-  view = "detail"; render();
+  rightView = "detail"; render();
 };
-window.goList = function() { view = "list"; render(); };
+window.goList = function() {
+  rightView = "list"; render();
+};
 window.openForm = function() {
   editingId = null; currentRecipe = null;
-  formIngredients = [{ amount: "", unit: "", name: "" }];
-  formSteps = [{ instruction: "" }];
   formDifficulty = "medium"; formRating = 0;
   view = "form"; render();
 };
 window.openEdit = async function(id) {
-  currentRecipe = await loadRecipeFull(id);
-  editingId = id;
-  formIngredients = currentRecipe.ingredients.length
-    ? currentRecipe.ingredients.map(i => ({ amount: i.amount, unit: i.unit, name: i.name }))
-    : [{ amount: "", unit: "", name: "" }];
-  formSteps = currentRecipe.steps.length
-    ? currentRecipe.steps.map(s => ({ instruction: s.instruction }))
-    : [{ instruction: "" }];
+  currentRecipe  = await loadRecipeFull(id);
+  editingId      = id;
   formDifficulty = currentRecipe.difficulty ?? "medium";
-  formRating = currentRecipe.rating ?? 0;
+  formRating     = currentRecipe.rating ?? 0;
   view = "form"; render();
 };
-window.cancelForm = function() { view = editingId ? "detail" : "list"; render(); };
-window.doSave = saveRecipe;
-window.doDelete = id => deleteRecipe(id);
-window.doAddToGrocery = async function() {
+window.cancelForm = function() {
+  view = "browse";
+  render();
+};
+window.doSave          = saveRecipe;
+window.doDelete        = id => deleteRecipe(id);
+window.doToggleFav     = (id, cur) => toggleFavorite(id, cur);
+window.doAddToGrocery  = async function() {
   const btn = document.getElementById("grocery-btn");
   if (btn) { btn.disabled = true; btn.textContent = "Adding…"; }
   await addToGrocery(currentRecipe);
   if (btn) { btn.disabled = false; btn.textContent = "🛒 Add to Grocery"; }
 };
-window.setFilterCat  = id  => { filterCat  = filterCat  === id  ? "" : id;  render(); };
-window.setFilterDiff = d   => { filterDiff = filterDiff === d   ? "" : d;   render(); };
-window.clearFilters  = ()  => { filterCat = ""; filterDiff = "";             render(); };
-window.setSearch     = q   => { searchQ = q;                                  render(); };
-window.setSortBy     = s   => { sortBy = s;                                   render(); };
-window.setDiff       = d   => { formDifficulty = d;                           render(); };
-window.setRating     = n   => { formRating = formRating === n ? 0 : n;       render(); };
-window.openCats      = openCategoryModal;
-window.captureIng  = (i, field, val) => { formIngredients[i][field] = val; };
-window.captureStep = (i, val)        => { formSteps[i].instruction = val; };
-window.addIng  = () => { formIngredients.push({ amount: "", unit: "", name: "" }); render(); };
-window.removeIng  = i => { removeIngredientRow(i); render(); };
-window.addStep = () => { formSteps.push({ instruction: "" }); render(); };
-window.removeStep = i => { removeStepRow(i); render(); };
+window.setNav     = f  => { navFilter = f; rightView = "list"; render(); };
+window.setSearch  = q  => { searchQ  = q; render(); };
+window.setSortBy  = s  => { sortBy   = s; render(); };
+window.setDiff    = d  => { formDifficulty = d; render(); };
+window.setRating  = n  => { formRating = formRating === n ? 0 : n; render(); };
+window.openCats   = openCategoryModal;
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
@@ -736,9 +791,9 @@ function showToast(msg, type = "") {
 (async () => {
   if (!DB) {
     recipes = [
-      { id: "demo-1", title: "Spaghetti Bolognese", difficulty: "medium", servings: 4, total_time_mins: 60, rating: 5, category_id: null },
-      { id: "demo-2", title: "Caesar Salad",        difficulty: "easy",   servings: 2, total_time_mins: 15, rating: 4, category_id: null },
-      { id: "demo-3", title: "Chicken Tikka Masala", difficulty: "hard",  servings: 4, total_time_mins: 90, rating: 5, category_id: null },
+      { id:"demo-1", title:"Spaghetti Bolognese", difficulty:"medium", servings:4, total_time_mins:60, rating:5, category_id:null, is_favorite:0 },
+      { id:"demo-2", title:"Caesar Salad",        difficulty:"easy",   servings:2, total_time_mins:15, rating:4, category_id:null, is_favorite:1 },
+      { id:"demo-3", title:"Chicken Tikka Masala",difficulty:"hard",   servings:4, total_time_mins:90, rating:5, category_id:null, is_favorite:0 },
     ];
   } else {
     await loadAll();

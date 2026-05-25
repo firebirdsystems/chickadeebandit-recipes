@@ -1,7 +1,3 @@
-export function formatIngredient(ing) {
-  return [ing.amount, ing.unit, ing.name].filter(Boolean).join(" ").trim();
-}
-
 export function formatTime(mins) {
   if (!mins) return "";
   if (mins < 60) return `${mins}m`;
