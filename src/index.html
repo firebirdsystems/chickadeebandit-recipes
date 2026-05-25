@@ -872,6 +872,7 @@ function showToast(msg, type = "") {
     ];
   } else {
     await loadAll();
+    syncExport();
   }
   render();
 })();
