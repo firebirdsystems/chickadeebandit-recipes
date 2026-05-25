@@ -87,6 +87,16 @@
     .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
     .nav-divider { height: 1px; background: var(--border); margin: 6px 0; }
 
+    /* ── Category checkboxes in form ── */
+    .cat-checkboxes { display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow-y: auto; }
+    .cat-check-label {
+      display: flex; align-items: center; gap: 8px; padding: 5px 8px;
+      border-radius: 6px; cursor: pointer; font-size: 0.9rem; user-select: none;
+      transition: background .1s;
+    }
+    .cat-check-label:hover { background: var(--border); }
+    .cat-check-label input[type=checkbox] { width: auto; margin: 0; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
+
     /* ── Right content pane ── */
     .content-pane { flex: 1; min-width: 0; overflow-y: auto; padding: 16px; }
 
@@ -326,14 +336,14 @@ let sortBy        = "title"; // "title" | "time"
 let formDifficulty = "medium";
 let formRating     = 0;
 let showCatForm    = false;
-let formFields     = { title:"", description:"", category_id:"", servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
+let formFields     = { title:"", description:"", category_ids:[], servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
 
 function captureFormFields() {
   if (view !== "form") return;
   formFields = {
     title:         document.getElementById("f-title")?.value    ?? formFields.title,
     description:   document.getElementById("f-desc")?.value     ?? formFields.description,
-    category_id:   document.getElementById("f-cat")?.value      ?? formFields.category_id,
+    category_ids:  Array.from(document.querySelectorAll('input[name="f-cats"]:checked')).map(el => el.value),
     servings:      document.getElementById("f-servings")?.value ?? formFields.servings,
     total_time_mins: document.getElementById("f-time")?.value   ?? formFields.total_time_mins,
     source:        document.getElementById("f-source")?.value   ?? formFields.source,
@@ -357,29 +367,38 @@ async function db(sql, params = []) {
 
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadAll() {
-  const [rRes, cRes] = await Promise.all([
+  const [rRes, cRes, rcRes] = await Promise.all([
     db(`SELECT * FROM recipes ORDER BY title`),
     db(`SELECT * FROM categories ORDER BY name`),
+    db(`SELECT recipe_id, category_id FROM recipe_categories`),
   ]);
-  recipes    = rRes.rows;
   categories = cRes.rows;
+  const rcMap = {};
+  for (const rc of rcRes.rows) {
+    (rcMap[rc.recipe_id] ??= []).push(rc.category_id);
+  }
+  recipes = rRes.rows.map(r => ({ ...r, category_ids: rcMap[r.id] ?? [] }));
 }
 
 async function loadRecipeFull(id) {
-  const { rows } = await db(`SELECT * FROM recipes WHERE id = ?`, [id]);
-  return rows[0] ?? null;
+  const [rRes, rcRes] = await Promise.all([
+    db(`SELECT * FROM recipes WHERE id = ?`, [id]),
+    db(`SELECT category_id FROM recipe_categories WHERE recipe_id = ?`, [id]),
+  ]);
+  if (!rRes.rows[0]) return null;
+  return { ...rRes.rows[0], category_ids: rcRes.rows.map(r => r.category_id) };
 }
 
 // ── Filtered recipe list ──────────────────────────────────────────────────────
 function getFiltered() {
   let list = [...recipes];
 
-  if      (navFilter === "top_rated")    list = list.filter(r => r.rating);
-  else if (navFilter === "favorites")    list = list.filter(r => !!r.is_favorite);
-  else if (navFilter === "uncategorized") list = list.filter(r => !r.category_id);
+  if      (navFilter === "top_rated")     list = list.filter(r => r.rating);
+  else if (navFilter === "favorites")     list = list.filter(r => !!r.is_favorite);
+  else if (navFilter === "uncategorized") list = list.filter(r => !r.category_ids?.length);
   else if (navFilter.startsWith("cat:")) {
     const catId = navFilter.slice(4);
-    list = list.filter(r => r.category_id === catId);
+    list = list.filter(r => r.category_ids?.includes(catId));
   }
 
   if (searchQ) {
@@ -400,9 +419,8 @@ function getFiltered() {
 async function syncExport() {
   if (!STORE) return;
   try {
-    const { rows } = await db(`SELECT * FROM recipes ORDER BY title`);
-    const exported = rows.map(r => ({
-      id: r.id, title: r.title, category_id: r.category_id,
+    const exported = recipes.map(r => ({
+      id: r.id, title: r.title, category_ids: r.category_ids ?? [],
       difficulty: r.difficulty, servings: r.servings,
       total_time_mins: r.total_time_mins, rating: r.rating,
       ingredients_text: r.ingredients_text ?? "",
@@ -453,7 +471,7 @@ window.addCatInline = async function() {
 window.deleteCatInline = async function(id, name) {
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
   await db(`DELETE FROM categories WHERE id = ?`, [id]);
-  await db(`UPDATE recipes SET category_id = NULL WHERE category_id = ?`, [id]);
+  await db(`DELETE FROM recipe_categories WHERE category_id = ?`, [id]);
   if (navFilter === "cat:" + id) navFilter = "all";
   await loadAll();
   render();
@@ -480,36 +498,43 @@ async function saveRecipe() {
   const now = new Date().toISOString();
 
   try {
+    const catIds = formFields.category_ids;
     const data = {
       title,
-      description:      document.getElementById("f-desc")?.value.trim()   ?? "",
-      category_id:      document.getElementById("f-cat")?.value            || null,
+      description:      document.getElementById("f-desc")?.value.trim()  ?? "",
       difficulty:       formDifficulty,
       servings:         parseInt(document.getElementById("f-servings")?.value) || 4,
       total_time_mins:  parseInt(document.getElementById("f-time")?.value)     || null,
-      source:           document.getElementById("f-source")?.value.trim()  ?? "",
+      source:           document.getElementById("f-source")?.value.trim() ?? "",
       rating:           formRating || null,
-      ingredients_text: document.getElementById("f-ings")?.value           ?? "",
-      steps_text:       document.getElementById("f-steps")?.value          ?? "",
-      notes:            document.getElementById("f-notes")?.value.trim()   ?? "",
+      ingredients_text: document.getElementById("f-ings")?.value          ?? "",
+      steps_text:       document.getElementById("f-steps")?.value         ?? "",
+      notes:            document.getElementById("f-notes")?.value.trim()  ?? "",
     };
 
+    let recipeId;
     if (editingId) {
+      recipeId = editingId;
       await db(
-        `UPDATE recipes SET title=?,description=?,category_id=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
-        [data.title, data.description, data.category_id, data.difficulty, data.servings,
+        `UPDATE recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
+        [data.title, data.description, data.difficulty, data.servings,
          data.total_time_mins, data.source, data.rating, data.ingredients_text,
-         data.steps_text, data.notes, now, editingId]);
+         data.steps_text, data.notes, now, recipeId]);
+      await db(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [recipeId]);
     } else {
-      const id     = crypto.randomUUID();
-      const who    = ME?.id   ?? "demo";
+      recipeId      = crypto.randomUUID();
+      const who     = ME?.id   ?? "demo";
       const whoName = ME?.name ?? "Demo";
       await db(
-        `INSERT INTO recipes (id,title,description,category_id,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
-        [id, data.title, data.description, data.category_id, data.difficulty,
+        `INSERT INTO recipes (id,title,description,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
+        [recipeId, data.title, data.description, data.difficulty,
          data.servings, data.total_time_mins, data.source, data.rating,
          data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now]);
-      editingId = id;
+      editingId = recipeId;
+    }
+
+    for (const catId of catIds) {
+      await db(`INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [recipeId, catId]);
     }
 
     await Promise.all([loadAll(), syncExport()]);
@@ -524,6 +549,7 @@ async function saveRecipe() {
 
 async function deleteRecipe(id) {
   if (!await hubConfirm({ message: "Delete this recipe?", confirmLabel: "Delete", destructive: true })) return;
+  await db(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [id]);
   await db(`DELETE FROM recipes WHERE id = ?`, [id]);
   await Promise.all([loadAll(), syncExport()]);
   currentRecipe = null;
@@ -579,7 +605,7 @@ function listHtml() {
     </select>` : "";
 
   const cards = filtered.length ? filtered.map(r => {
-    const cat = categories.find(c => c.id === r.category_id);
+    const cats = (r.category_ids ?? []).map(id => categories.find(c => c.id === id)).filter(Boolean);
     const fav = !!r.is_favorite;
     return `
       <div class="recipe-card" onclick="openDetail('${r.id}')">
@@ -587,7 +613,7 @@ function listHtml() {
           <div class="recipe-card-title">${esc(r.title)}</div>
           <div class="recipe-card-meta">
             <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
-            ${cat ? `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>` : ""}
+            ${cats.map(cat => `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>`).join("")}
             ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
             ${r.servings        ? `<span class="meta-text">👥 ${r.servings}</span>` : ""}
             ${r.rating          ? `<span class="stars">${starDisplay(r.rating)}</span>` : ""}
@@ -615,7 +641,7 @@ function listHtml() {
 function detailHtml() {
   const r = currentRecipe;
   if (!r) return "";
-  const cat   = categories.find(c => c.id === r.category_id);
+  const cats  = (r.category_ids ?? []).map(id => categories.find(c => c.id === id)).filter(Boolean);
   const isUrl = r.source?.startsWith("http");
   const fav   = !!r.is_favorite;
   const ingredientLines = (r.ingredients_text ?? "").split("\n").map(s => s.trim()).filter(Boolean);
@@ -637,7 +663,7 @@ function detailHtml() {
 
     <div class="detail-meta-row">
       <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
-      ${cat ? `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>` : ""}
+      ${cats.map(cat => `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>`).join("")}
       ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
       ${r.servings        ? `<span class="meta-text">👥 ${r.servings} servings</span>` : ""}
       ${r.rating          ? `<span class="stars" title="${r.rating}/5 stars">${starDisplay(r.rating)}</span>` : ""}
@@ -672,11 +698,16 @@ function detailHtml() {
 }
 
 function formHtml() {
-  const editing    = !!editingId;
-  const catOptions = `<option value="">Uncategorized</option>` +
-    categories.map(c =>
-      `<option value="${esc(c.id)}"${formFields.category_id === c.id ? " selected" : ""}>${esc(c.name)}</option>`
-    ).join("");
+  const editing = !!editingId;
+
+  const catChecks = categories.length ? categories.map(c => `
+    <label class="cat-check-label">
+      <input type="checkbox" name="f-cats" value="${esc(c.id)}"
+        ${formFields.category_ids.includes(c.id) ? "checked" : ""} />
+      <span class="cat-dot" style="background:${esc(c.color)}"></span>
+      ${esc(c.name)}
+    </label>`).join("") :
+    `<p style="font-size:0.85rem;color:var(--muted);padding:4px 0">No categories yet — add one in the sidebar.</p>`;
 
   const starsHtml = [1,2,3,4,5].map(n =>
     `<button class="star-btn${formRating >= n ? " on" : ""}" onclick="setRating(${n})">★</button>`
@@ -696,11 +727,11 @@ function formHtml() {
         <label>Description</label>
         <textarea id="f-desc" placeholder="A brief description…">${esc(formFields.description)}</textarea>
       </div>
+      <div class="field">
+        <label>Categories</label>
+        <div class="cat-checkboxes">${catChecks}</div>
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div class="field" style="flex:1;min-width:140px">
-          <label>Category</label>
-          <select id="f-cat">${catOptions}</select>
-        </div>
         <div class="field" style="flex:1;min-width:110px">
           <label>Servings</label>
           <input id="f-servings" type="number" min="1" value="${esc(formFields.servings)}" />
@@ -779,7 +810,7 @@ window.goList = function() {
 window.openForm = function() {
   editingId = null; currentRecipe = null;
   formDifficulty = "medium"; formRating = 0;
-  formFields = { title:"", description:"", category_id:"", servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
+  formFields = { title:"", description:"", category_ids:[], servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
   view = "form"; render();
   setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
@@ -791,7 +822,7 @@ window.openEdit = async function(id) {
   formFields = {
     title:           currentRecipe.title            ?? "",
     description:     currentRecipe.description      ?? "",
-    category_id:     currentRecipe.category_id      ?? "",
+    category_ids:    currentRecipe.category_ids     ?? [],
     servings:        String(currentRecipe.servings   ?? 4),
     total_time_mins: String(currentRecipe.total_time_mins ?? ""),
     source:          currentRecipe.source            ?? "",
