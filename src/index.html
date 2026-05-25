@@ -56,6 +56,35 @@
       font-size: 0.68rem; font-weight: 700; letter-spacing: .08em;
       text-transform: uppercase; color: var(--muted);
     }
+    .nav-section-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 8px 4px 16px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .nav-add-btn {
+      background: none; border: none; color: var(--muted); font-size: 1.1rem; line-height: 1;
+      cursor: pointer; width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; transition: background .12s, color .12s;
+    }
+    .nav-add-btn:hover { background: var(--border); color: var(--accent); }
+    .cat-inline-form { padding: 6px 10px 10px; border-bottom: 1px solid var(--border); }
+    .cat-inline-input {
+      display: block; width: 100%; padding: 5px 8px; font-size: 0.83rem;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-family: inherit; color: var(--text); background: var(--card); outline: none;
+    }
+    .cat-inline-input:focus { border-color: var(--accent); }
+    .cat-inline-row { display: flex; gap: 5px; align-items: center; margin-top: 5px; }
+    .nav-cat-row { display: flex; align-items: center; }
+    .nav-cat-row .nav-item { flex: 1; min-width: 0; }
+    .nav-cat-del {
+      background: none; border: none; color: var(--muted); font-size: 0.9rem; line-height: 1;
+      cursor: pointer; padding: 0 8px; opacity: 0; flex-shrink: 0; transition: opacity .12s, color .12s;
+    }
+    .nav-cat-row:hover .nav-cat-del { opacity: 1; }
+    .nav-cat-del:hover { color: var(--red); }
+    .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
     .nav-divider { height: 1px; background: var(--border); margin: 6px 0; }
 
     /* ── Right content pane ── */
@@ -73,8 +102,8 @@
       outline: none; font-family: inherit; color: var(--text);
     }
     .search-input:focus { border-color: var(--accent); }
-    .sort-select {
-      border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 8px;
+    select.sort-select {
+      width: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 8px;
       font-size: 0.8rem; background: var(--card); color: var(--text);
       outline: none; font-family: inherit; cursor: pointer; flex-shrink: 0;
     }
@@ -265,6 +294,8 @@
       .layout.detail-mode .nav-pane { display: none; }
       .back-btn { display: block; }
       .fab { bottom: 16px; right: 16px; }
+      .nav-section-row, .cat-inline-form { display: none; }
+      .nav-cat-del { opacity: 1; }
     }
   </style>
   <base href="/run/recipes/">
@@ -294,6 +325,23 @@ let sortBy        = "title"; // "title" | "time"
 
 let formDifficulty = "medium";
 let formRating     = 0;
+let showCatForm    = false;
+let formFields     = { title:"", description:"", category_id:"", servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
+
+function captureFormFields() {
+  if (view !== "form") return;
+  formFields = {
+    title:         document.getElementById("f-title")?.value    ?? formFields.title,
+    description:   document.getElementById("f-desc")?.value     ?? formFields.description,
+    category_id:   document.getElementById("f-cat")?.value      ?? formFields.category_id,
+    servings:      document.getElementById("f-servings")?.value ?? formFields.servings,
+    total_time_mins: document.getElementById("f-time")?.value   ?? formFields.total_time_mins,
+    source:        document.getElementById("f-source")?.value   ?? formFields.source,
+    ings:          document.getElementById("f-ings")?.value     ?? formFields.ings,
+    steps:         document.getElementById("f-steps")?.value    ?? formFields.steps,
+    notes:         document.getElementById("f-notes")?.value    ?? formFields.notes,
+  };
+}
 
 // ── DB ────────────────────────────────────────────────────────────────────────
 async function db(sql, params = []) {
@@ -383,56 +431,31 @@ async function addToGrocery(recipe) {
 }
 
 // ── Category CRUD ─────────────────────────────────────────────────────────────
-function openCategoryModal() {
-  const modal = document.createElement("div");
-  modal.className = "modal-backdrop";
-  modal.innerHTML = `
-    <div class="modal">
-      <h3>Manage Categories</h3>
-      <div id="cat-list" style="margin-bottom:12px">
-        ${categories.map(c => `
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="width:14px;height:14px;border-radius:50%;background:${esc(c.color)};flex-shrink:0;display:inline-block"></span>
-            <span style="flex:1;font-size:0.9rem">${esc(c.name)}</span>
-            <button onclick="deleteCategory('${esc(c.id)}')" class="row-del" title="Delete">✕</button>
-          </div>`).join("") || '<p style="color:var(--muted);font-size:0.85rem">No categories yet</p>'}
-      </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input id="new-cat-name" type="text" placeholder="Category name"
-          style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:0.9rem;font-family:inherit;color:var(--text);background:var(--card);outline:none" />
-        <input id="new-cat-color" type="color" value="#6366f1"
-          style="width:36px;height:36px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;padding:2px" />
-        <button class="btn btn-primary" style="padding:7px 12px" onclick="addCategory()">Add</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="this.closest('.modal-backdrop').remove()">Done</button>
-      </div>
-    </div>`;
-  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
-
-window.addCategory = async function() {
-  const nameEl  = document.getElementById("new-cat-name");
-  const colorEl = document.getElementById("new-cat-color");
-  const name = nameEl.value.trim();
-  if (!name) { nameEl.focus(); return; }
-  const id = crypto.randomUUID();
-  await db(`INSERT INTO categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
-    [id, name, colorEl.value, new Date().toISOString()]);
-  nameEl.value = "";
-  await loadAll();
-  document.querySelector(".modal-backdrop")?.remove();
-  openCategoryModal();
+window.toggleCatForm = function() {
+  showCatForm = !showCatForm;
+  render();
+  if (showCatForm) setTimeout(() => document.getElementById("new-cat-name")?.focus(), 0);
 };
 
-window.deleteCategory = async function(id) {
-  if (!await hubConfirm({ message: "Delete this category?", confirmLabel: "Delete", destructive: true })) return;
+window.addCatInline = async function() {
+  const nameEl  = document.getElementById("new-cat-name");
+  const colorEl = document.getElementById("new-cat-color");
+  const name = nameEl?.value.trim();
+  if (!name) { nameEl?.focus(); return; }
+  await db(`INSERT INTO categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
+    [crypto.randomUUID(), name, colorEl?.value ?? "#6366f1", new Date().toISOString()]);
+  await loadAll();
+  showCatForm = false;
+  render();
+  showToast(`"${name}" added`);
+};
+
+window.deleteCatInline = async function(id, name) {
+  if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
   await db(`DELETE FROM categories WHERE id = ?`, [id]);
   await db(`UPDATE recipes SET category_id = NULL WHERE category_id = ?`, [id]);
+  if (navFilter === "cat:" + id) navFilter = "all";
   await loadAll();
-  document.querySelector(".modal-backdrop")?.remove();
-  openCategoryModal();
   render();
 };
 
@@ -513,17 +536,33 @@ function navHtml() {
   function item(id, label) {
     return `<button class="nav-item${navFilter === id ? " active" : ""}" onclick="setNav('${id}')">${esc(label)}</button>`;
   }
-  const catItems = categories.map(c =>
-    `<button class="nav-item${navFilter === "cat:" + c.id ? " active" : ""}" onclick="setNav('cat:${esc(c.id)}')"
-       title="${esc(c.name)}">${esc(c.name)}</button>`
-  ).join("");
+  const catItems = categories.map(c => `
+    <div class="nav-cat-row">
+      <button class="nav-item${navFilter === "cat:" + c.id ? " active" : ""}" onclick="setNav('cat:${esc(c.id)}')" title="${esc(c.name)}">
+        <span class="cat-dot" style="background:${esc(c.color)}"></span>${esc(c.name)}
+      </button>
+      <button class="nav-cat-del" onclick="deleteCatInline('${esc(c.id)}','${esc(c.name)}')" title="Delete">×</button>
+    </div>`).join("");
+
+  const catForm = showCatForm ? `
+    <div class="cat-inline-form">
+      <input id="new-cat-name" class="cat-inline-input" type="text" placeholder="Category name"
+        onkeydown="if(event.key==='Enter')addCatInline()" />
+      <div class="cat-inline-row">
+        <input id="new-cat-color" type="color" value="#6366f1"
+          style="width:30px;height:28px;border:1px solid var(--border);border-radius:5px;cursor:pointer;flex-shrink:0;padding:1px" />
+        <button onclick="addCatInline()" class="btn btn-primary" style="flex:1;padding:5px 10px;font-size:0.8rem">Add</button>
+        <button onclick="toggleCatForm()" class="btn btn-ghost" style="padding:5px 9px;font-size:0.85rem">✕</button>
+      </div>
+    </div>` : "";
 
   return `
     ${item("all",       "All Recipes")}
     ${item("top_rated", "Top Rated")}
     ${item("favorites", "Favorites")}
     <div class="nav-divider"></div>
-    <div class="nav-section">Categories</div>
+    <div class="nav-section-row">Categories <button class="nav-add-btn" onclick="toggleCatForm()" title="Add category">+</button></div>
+    ${catForm}
     ${catItems}
     ${item("uncategorized", "Uncategorized")}
   `;
@@ -534,7 +573,7 @@ function listHtml() {
 
   const showSort = navFilter !== "top_rated";
   const sortSelect = showSort ? `
-    <select class="sort-select" onchange="setSortBy(this.value)">
+    <select class="sort-select" style="width:auto" onchange="setSortBy(this.value)">
       <option value="title"${sortBy === "title" ? " selected" : ""}>A–Z</option>
       <option value="time"${sortBy  === "time"  ? " selected" : ""}>Quickest</option>
     </select>` : "";
@@ -636,7 +675,7 @@ function formHtml() {
   const editing    = !!editingId;
   const catOptions = `<option value="">Uncategorized</option>` +
     categories.map(c =>
-      `<option value="${esc(c.id)}"${editing && currentRecipe?.category_id === c.id ? " selected" : ""}>${esc(c.name)}</option>`
+      `<option value="${esc(c.id)}"${formFields.category_id === c.id ? " selected" : ""}>${esc(c.name)}</option>`
     ).join("");
 
   const starsHtml = [1,2,3,4,5].map(n =>
@@ -651,28 +690,24 @@ function formHtml() {
     <div class="form-card">
       <div class="field">
         <label>Title *</label>
-        <input id="f-title" type="text" placeholder="Recipe title"
-          value="${editing ? esc(currentRecipe?.title ?? "") : ""}" />
+        <input id="f-title" type="text" placeholder="Recipe title" value="${esc(formFields.title)}" />
       </div>
       <div class="field">
         <label>Description</label>
-        <textarea id="f-desc" placeholder="A brief description…">${editing ? esc(currentRecipe?.description ?? "") : ""}</textarea>
+        <textarea id="f-desc" placeholder="A brief description…">${esc(formFields.description)}</textarea>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="field" style="flex:1;min-width:140px">
-          <label>Category
-            <button onclick="openCats()" style="font-size:0.7rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600">+ Manage</button>
-          </label>
+          <label>Category</label>
           <select id="f-cat">${catOptions}</select>
         </div>
         <div class="field" style="flex:1;min-width:110px">
           <label>Servings</label>
-          <input id="f-servings" type="number" min="1" value="${editing ? (currentRecipe?.servings ?? 4) : 4}" />
+          <input id="f-servings" type="number" min="1" value="${esc(formFields.servings)}" />
         </div>
         <div class="field" style="flex:1;min-width:110px">
           <label>Time (min)</label>
-          <input id="f-time" type="number" min="1" placeholder="e.g. 45"
-            value="${editing ? (currentRecipe?.total_time_mins ?? "") : ""}" />
+          <input id="f-time" type="number" min="1" placeholder="e.g. 45" value="${esc(formFields.total_time_mins)}" />
         </div>
       </div>
       <div class="field">
@@ -692,23 +727,20 @@ function formHtml() {
       </div>
       <div class="field">
         <label>Source</label>
-        <input id="f-source" type="text" placeholder="URL or book name"
-          value="${editing ? esc(currentRecipe?.source ?? "") : ""}" />
+        <input id="f-source" type="text" placeholder="URL or book name" value="${esc(formFields.source)}" />
       </div>
       <div class="field">
         <label>Ingredients — one per line</label>
         <textarea id="f-ings" class="tall"
-          placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs">${editing ? esc(currentRecipe?.ingredients_text ?? "") : ""}</textarea>
+          placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs">${esc(formFields.ings)}</textarea>
       </div>
       <div class="field">
         <label>Steps</label>
-        <textarea id="f-steps" class="tall"
-          placeholder="Write out the steps…">${editing ? esc(currentRecipe?.steps_text ?? "") : ""}</textarea>
+        <textarea id="f-steps" class="tall" placeholder="Write out the steps…">${esc(formFields.steps)}</textarea>
       </div>
       <div class="field">
         <label>Notes</label>
-        <textarea id="f-notes"
-          placeholder="Tips, variations, substitutions…">${editing ? esc(currentRecipe?.notes ?? "") : ""}</textarea>
+        <textarea id="f-notes" placeholder="Tips, variations, substitutions…">${esc(formFields.notes)}</textarea>
       </div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="cancelForm()">Cancel</button>
@@ -725,7 +757,6 @@ function render() {
   if (view === "form") {
     el.className = "layout";
     el.innerHTML = `<div class="full-pane"><div class="full-pane-inner">${formHtml()}</div></div>`;
-    document.getElementById("f-title")?.focus();
     return;
   }
 
@@ -748,14 +779,28 @@ window.goList = function() {
 window.openForm = function() {
   editingId = null; currentRecipe = null;
   formDifficulty = "medium"; formRating = 0;
+  formFields = { title:"", description:"", category_id:"", servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
   view = "form"; render();
+  setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
 window.openEdit = async function(id) {
   currentRecipe  = await loadRecipeFull(id);
   editingId      = id;
   formDifficulty = currentRecipe.difficulty ?? "medium";
   formRating     = currentRecipe.rating ?? 0;
+  formFields = {
+    title:           currentRecipe.title            ?? "",
+    description:     currentRecipe.description      ?? "",
+    category_id:     currentRecipe.category_id      ?? "",
+    servings:        String(currentRecipe.servings   ?? 4),
+    total_time_mins: String(currentRecipe.total_time_mins ?? ""),
+    source:          currentRecipe.source            ?? "",
+    ings:            currentRecipe.ingredients_text  ?? "",
+    steps:           currentRecipe.steps_text        ?? "",
+    notes:           currentRecipe.notes             ?? "",
+  };
   view = "form"; render();
+  setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
 window.cancelForm = function() {
   view = "browse";
@@ -773,9 +818,8 @@ window.doAddToGrocery  = async function() {
 window.setNav     = f  => { navFilter = f; rightView = "list"; render(); };
 window.setSearch  = q  => { searchQ  = q; render(); };
 window.setSortBy  = s  => { sortBy   = s; render(); };
-window.setDiff    = d  => { formDifficulty = d; render(); };
-window.setRating  = n  => { formRating = formRating === n ? 0 : n; render(); };
-window.openCats   = openCategoryModal;
+window.setDiff    = d  => { captureFormFields(); formDifficulty = d; render(); };
+window.setRating  = n  => { captureFormFields(); formRating = formRating === n ? 0 : n; render(); };
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
