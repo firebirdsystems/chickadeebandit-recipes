@@ -6,7 +6,7 @@
   "entrypoint": "index.html",
   "runtime": "static",
   "storage": "db",
-  "category": "home",
+  "category": "family",
   "tags": ["recipes", "food", "cooking", "ingredients"],
   "exports": ["recipes"],
   "data_access": {
