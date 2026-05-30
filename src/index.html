@@ -862,6 +862,13 @@ function showToast(msg, type = "") {
   toastTimer = setTimeout(() => { el.className = "toast"; }, 3000);
 }
 
+// ── Deep link ─────────────────────────────────────────────────────────────────
+function handleDeepLink() {
+  const recipeId = new URLSearchParams(window.location.search).get("recipeId");
+  if (!recipeId) return;
+  window.openDetail(recipeId);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
   if (!DB) {
@@ -875,6 +882,7 @@ function showToast(msg, type = "") {
     syncExport();
   }
   render();
+  handleDeepLink();
 })();
 </script>
 </body>
