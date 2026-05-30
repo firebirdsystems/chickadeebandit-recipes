@@ -489,6 +489,7 @@ async function toggleFavorite(id, currentVal) {
 
 // ── Recipe CRUD ───────────────────────────────────────────────────────────────
 async function saveRecipe() {
+  captureFormFields();
   const title = document.getElementById("f-title")?.value.trim();
   if (!title) { document.getElementById("f-title")?.focus(); return; }
 
