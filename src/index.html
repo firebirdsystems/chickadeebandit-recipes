@@ -326,7 +326,7 @@ const ME    = window.__CURRENT_MEMBER ?? null;
 let view      = "browse"; // "browse" | "form"
 let rightView = "list";   // "list"   | "detail"  (only when view="browse")
 
-let recipes = [], categories = [];
+let recipes = [], categories = [], categoryMap = new Map();
 let currentRecipe = null;
 let editingId     = null;
 let navFilter     = "all"; // "all" | "top_rated" | "favorites" | "cat:{id}" | "uncategorized"
@@ -373,6 +373,7 @@ async function loadAll() {
     db(`SELECT recipe_id, category_id FROM recipe_categories`),
   ]);
   categories = cRes.rows;
+  categoryMap = new Map(categories.map(c => [c.id, c]));
   const rcMap = {};
   for (const rc of rcRes.rows) {
     (rcMap[rc.recipe_id] ??= []).push(rc.category_id);
@@ -493,29 +494,46 @@ async function saveRecipe() {
   const title = document.getElementById("f-title")?.value.trim();
   if (!title) { document.getElementById("f-title")?.focus(); return; }
 
-  const btn = document.querySelector(".form-actions .btn-primary");
-  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
-
   const now = new Date().toISOString();
+  const catIds = formFields.category_ids;
+  const data = {
+    title,
+    description:      document.getElementById("f-desc")?.value.trim()  ?? "",
+    difficulty:       formDifficulty,
+    servings:         parseInt(document.getElementById("f-servings")?.value) || 4,
+    total_time_mins:  parseInt(document.getElementById("f-time")?.value)     || null,
+    source:           document.getElementById("f-source")?.value.trim() ?? "",
+    rating:           formRating || null,
+    ingredients_text: document.getElementById("f-ings")?.value          ?? "",
+    steps_text:       document.getElementById("f-steps")?.value         ?? "",
+    notes:            document.getElementById("f-notes")?.value.trim()  ?? "",
+  };
 
+  const isNew   = !editingId;
+  const recipeId = editingId ?? crypto.randomUUID();
+
+  // Optimistic update — patch local state and navigate immediately
+  const optimisticRecipe = {
+    ...data, id: recipeId, category_ids: catIds,
+    is_favorite: isNew ? 0 : (recipes.find(r => r.id === recipeId)?.is_favorite ?? 0),
+    created_by_id: ME?.id ?? "demo", created_by_name: ME?.name ?? "Demo",
+    created_at: isNew ? now : (recipes.find(r => r.id === recipeId)?.created_at ?? now),
+    updated_at: now,
+  };
+  if (isNew) {
+    recipes.push(optimisticRecipe);
+  } else {
+    const idx = recipes.findIndex(r => r.id === recipeId);
+    if (idx !== -1) recipes[idx] = optimisticRecipe;
+  }
+  currentRecipe = optimisticRecipe;
+  editingId     = recipeId;
+  view = "browse"; rightView = "detail";
+  render();
+
+  // Persist in the background
   try {
-    const catIds = formFields.category_ids;
-    const data = {
-      title,
-      description:      document.getElementById("f-desc")?.value.trim()  ?? "",
-      difficulty:       formDifficulty,
-      servings:         parseInt(document.getElementById("f-servings")?.value) || 4,
-      total_time_mins:  parseInt(document.getElementById("f-time")?.value)     || null,
-      source:           document.getElementById("f-source")?.value.trim() ?? "",
-      rating:           formRating || null,
-      ingredients_text: document.getElementById("f-ings")?.value          ?? "",
-      steps_text:       document.getElementById("f-steps")?.value         ?? "",
-      notes:            document.getElementById("f-notes")?.value.trim()  ?? "",
-    };
-
-    let recipeId;
-    if (editingId) {
-      recipeId = editingId;
+    if (!isNew) {
       await db(
         `UPDATE recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
         [data.title, data.description, data.difficulty, data.servings,
@@ -523,7 +541,6 @@ async function saveRecipe() {
          data.steps_text, data.notes, now, recipeId]);
       await db(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [recipeId]);
     } else {
-      recipeId      = crypto.randomUUID();
       const who     = ME?.id   ?? "demo";
       const whoName = ME?.name ?? "Demo";
       await db(
@@ -531,7 +548,6 @@ async function saveRecipe() {
         [recipeId, data.title, data.description, data.difficulty,
          data.servings, data.total_time_mins, data.source, data.rating,
          data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now]);
-      editingId = recipeId;
     }
 
     for (const catId of catIds) {
@@ -539,12 +555,13 @@ async function saveRecipe() {
     }
 
     await Promise.all([loadAll(), syncExport()]);
-    currentRecipe = await loadRecipeFull(editingId);
-    view = "browse"; rightView = "detail";
+    currentRecipe = recipes.find(r => r.id === recipeId) ?? currentRecipe;
     render();
   } catch {
-    showToast("Save failed — try again", "error");
-    if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+    showToast("Save failed — changes may not have been saved", "error");
+    await loadAll();
+    currentRecipe = recipes.find(r => r.id === recipeId) ?? null;
+    render();
   }
 }
 
@@ -606,7 +623,7 @@ function listHtml() {
     </select>` : "";
 
   const cards = filtered.length ? filtered.map(r => {
-    const cats = (r.category_ids ?? []).map(id => categories.find(c => c.id === id)).filter(Boolean);
+    const cats = (r.category_ids ?? []).map(id => categoryMap.get(id)).filter(Boolean);
     const fav = !!r.is_favorite;
     return `
       <div class="recipe-card" onclick="openDetail('${r.id}')">
@@ -642,7 +659,7 @@ function listHtml() {
 function detailHtml() {
   const r = currentRecipe;
   if (!r) return "";
-  const cats  = (r.category_ids ?? []).map(id => categories.find(c => c.id === id)).filter(Boolean);
+  const cats  = (r.category_ids ?? []).map(id => categoryMap.get(id)).filter(Boolean);
   const isUrl = r.source?.startsWith("http");
   const fav   = !!r.is_favorite;
   const ingredientLines = (r.ingredients_text ?? "").split("\n").map(s => s.trim()).filter(Boolean);
