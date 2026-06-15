@@ -1,14 +1,12 @@
-CREATE TABLE IF NOT EXISTS categories (
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_recipes__categories (
   id           TEXT NOT NULL,
   name         TEXT NOT NULL,
   color        TEXT NOT NULL DEFAULT '#6b7280',
   created_at   TEXT NOT NULL,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS recipes (
-  household_id      UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_recipes__recipes (
   id                TEXT NOT NULL,
   title             TEXT NOT NULL,
   description       TEXT NOT NULL DEFAULT '',
@@ -25,14 +23,13 @@ CREATE TABLE IF NOT EXISTS recipes (
   created_by_name   TEXT NOT NULL,
   created_at        TEXT NOT NULL,
   updated_at        TEXT NOT NULL,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS recipe_categories (
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_recipes__recipe_categories (
   recipe_id    TEXT NOT NULL,
   category_id  TEXT NOT NULL,
-  PRIMARY KEY (household_id, recipe_id, category_id)
+  PRIMARY KEY (recipe_id, category_id)
 );
 
 

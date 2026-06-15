@@ -368,9 +368,9 @@ async function db(sql, params = []) {
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadAll() {
   const [rRes, cRes, rcRes] = await Promise.all([
-    db(`SELECT * FROM recipes ORDER BY title`),
-    db(`SELECT * FROM categories ORDER BY name`),
-    db(`SELECT recipe_id, category_id FROM recipe_categories`),
+    db(`SELECT * FROM app_recipes__recipes ORDER BY title`),
+    db(`SELECT * FROM app_recipes__categories ORDER BY name`),
+    db(`SELECT recipe_id, category_id FROM app_recipes__recipe_categories`),
   ]);
   categories = cRes.rows;
   categoryMap = new Map(categories.map(c => [c.id, c]));
@@ -383,8 +383,8 @@ async function loadAll() {
 
 async function loadRecipeFull(id) {
   const [rRes, rcRes] = await Promise.all([
-    db(`SELECT * FROM recipes WHERE id = ?`, [id]),
-    db(`SELECT category_id FROM recipe_categories WHERE recipe_id = ?`, [id]),
+    db(`SELECT * FROM app_recipes__recipes WHERE id = ?`, [id]),
+    db(`SELECT category_id FROM app_recipes__recipe_categories WHERE recipe_id = ?`, [id]),
   ]);
   if (!rRes.rows[0]) return null;
   return { ...rRes.rows[0], category_ids: rcRes.rows.map(r => r.category_id) };
@@ -461,7 +461,7 @@ window.addCatInline = async function() {
   const colorEl = document.getElementById("new-cat-color");
   const name = nameEl?.value.trim();
   if (!name) { nameEl?.focus(); return; }
-  await db(`INSERT INTO categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
+  await db(`INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
     [crypto.randomUUID(), name, colorEl?.value ?? "#6366f1", new Date().toISOString()]);
   await loadAll();
   showCatForm = false;
@@ -471,8 +471,8 @@ window.addCatInline = async function() {
 
 window.deleteCatInline = async function(id, name) {
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
-  await db(`DELETE FROM categories WHERE id = ?`, [id]);
-  await db(`DELETE FROM recipe_categories WHERE category_id = ?`, [id]);
+  await db(`DELETE FROM app_recipes__categories WHERE id = ?`, [id]);
+  await db(`DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, [id]);
   if (navFilter === "cat:" + id) navFilter = "all";
   await loadAll();
   render();
@@ -481,7 +481,7 @@ window.deleteCatInline = async function(id, name) {
 // ── Favorite toggle ───────────────────────────────────────────────────────────
 async function toggleFavorite(id, currentVal) {
   const newVal = currentVal ? 0 : 1;
-  await db(`UPDATE recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
+  await db(`UPDATE app_recipes__recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
   const r = recipes.find(r => r.id === id);
   if (r) r.is_favorite = newVal;
   if (currentRecipe?.id === id) currentRecipe.is_favorite = newVal;
@@ -535,23 +535,23 @@ async function saveRecipe() {
   try {
     if (!isNew) {
       await db(
-        `UPDATE recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
+        `UPDATE app_recipes__recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
         [data.title, data.description, data.difficulty, data.servings,
          data.total_time_mins, data.source, data.rating, data.ingredients_text,
          data.steps_text, data.notes, now, recipeId]);
-      await db(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [recipeId]);
+      await db(`DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, [recipeId]);
     } else {
       const who     = ME?.id   ?? "demo";
       const whoName = ME?.name ?? "Demo";
       await db(
-        `INSERT INTO recipes (id,title,description,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
+        `INSERT INTO app_recipes__recipes (id,title,description,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
         [recipeId, data.title, data.description, data.difficulty,
          data.servings, data.total_time_mins, data.source, data.rating,
          data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now]);
     }
 
     for (const catId of catIds) {
-      await db(`INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [recipeId, catId]);
+      await db(`INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [recipeId, catId]);
     }
 
     await Promise.all([loadAll(), syncExport()]);
@@ -567,8 +567,8 @@ async function saveRecipe() {
 
 async function deleteRecipe(id) {
   if (!await hubConfirm({ message: "Delete this recipe?", confirmLabel: "Delete", destructive: true })) return;
-  await db(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [id]);
-  await db(`DELETE FROM recipes WHERE id = ?`, [id]);
+  await db(`DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, [id]);
+  await db(`DELETE FROM app_recipes__recipes WHERE id = ?`, [id]);
   await Promise.all([loadAll(), syncExport()]);
   currentRecipe = null;
   rightView = "list";
