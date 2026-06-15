@@ -461,12 +461,28 @@ window.addCatInline = async function() {
   const colorEl = document.getElementById("new-cat-color");
   const name = nameEl?.value.trim();
   if (!name) { nameEl?.focus(); return; }
-  await db(`INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
-    [crypto.randomUUID(), name, colorEl?.value ?? "#6366f1", new Date().toISOString()]);
-  await loadAll();
+  const id = crypto.randomUUID();
+  const color = colorEl?.value ?? "#6366f1";
+  const created_at = new Date().toISOString();
+
+  // Optimistic update — add locally and render immediately
+  const newCat = { id, name, color, created_at };
+  categories.push(newCat);
+  categories.sort((a, b) => a.name.localeCompare(b.name));
+  categoryMap.set(id, newCat);
   showCatForm = false;
   render();
   showToast(`"${name}" added`);
+
+  // Persist in the background
+  try {
+    await db(`INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
+      [id, name, color, created_at]);
+  } catch {
+    showToast("Failed to save category", "error");
+    await loadAll();
+    render();
+  }
 };
 
 window.deleteCatInline = async function(id, name) {
