@@ -10,10 +10,7 @@ SELECT
   r.ingredients_text,
   r.created_by_name,
   r.created_at,
-  COALESCE(
-    string_agg(c.name, ', ' ORDER BY c.name),
-    ''
-  ) AS categories
+  COALESCE(GROUP_CONCAT(c.name, ', '), '') AS categories
 FROM app_recipes__recipes r
 LEFT JOIN app_recipes__recipe_categories rc
   ON rc.recipe_id    = r.id

@@ -487,8 +487,10 @@ window.addCatInline = async function() {
 
 window.deleteCatInline = async function(id, name) {
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
-  await db(`DELETE FROM app_recipes__categories WHERE id = ?`, [id]);
-  await db(`DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, [id]);
+  await Promise.all([
+    db(`DELETE FROM app_recipes__categories WHERE id = ?`, [id]),
+    db(`DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, [id]),
+  ]);
   if (navFilter === "cat:" + id) navFilter = "all";
   await loadAll();
   render();
