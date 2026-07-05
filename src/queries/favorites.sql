@@ -8,5 +8,5 @@ SELECT
   created_at
 FROM app_recipes__recipes
 WHERE is_favorite  = 1
-ORDER BY rating DESC NULLS LAST, title
+ORDER BY (rating IS NULL), rating DESC, title
 LIMIT 50
