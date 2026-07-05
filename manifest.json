@@ -24,6 +24,31 @@
   "nav": {
     "label": "Recipes"
   },
+  "shareable": {
+    "recipe": {
+      "table": "recipes",
+      "title_column": "title",
+      "columns": [
+        { "column": "description", "label": "Description", "format": "multiline" },
+        { "column": "ingredients_text", "label": "Ingredients", "format": "multiline" },
+        { "column": "steps_text", "label": "Steps", "format": "multiline" },
+        { "column": "servings", "label": "Servings", "format": "number" },
+        { "column": "total_time_mins", "label": "Total time (minutes)", "format": "number" },
+        { "column": "difficulty", "label": "Difficulty" },
+        { "column": "source", "label": "Source" }
+      ],
+      "aggregates": [
+        {
+          "label": "Categories",
+          "table": "recipe_categories",
+          "fk_column": "recipe_id",
+          "op": "list",
+          "value_column": "category_id",
+          "lookup": { "table": "categories", "label_column": "name" }
+        }
+      ]
+    }
+  },
   "icon": "📖",
   "ai_access": {
     "allowed": true,
