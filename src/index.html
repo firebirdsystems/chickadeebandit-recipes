@@ -322,6 +322,13 @@ const DB    = window.__DB_URL         ?? "";
 const STORE = window.__STORE_URL      ?? "";
 const ME    = window.__CURRENT_MEMBER ?? null;
 
+// Neutralize DB-derived ids before interpolating into inline on* handlers: any
+// member can INSERT a row with an attacker-chosen id via raw /api/db, and HTML
+// escaping does not protect a JS-string context inside an attribute (entities are
+// decoded before the JS parses). Legit ids are UUIDs/hex, so restricting to
+// [A-Za-z0-9_-] is lossless and closes the injection.
+const sid = v => String(v ?? "").replace(/[^A-Za-z0-9_-]/g, "");
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let view      = "browse"; // "browse" | "form"
 let rightView = "list";   // "list"   | "detail"  (only when view="browse")
@@ -485,7 +492,8 @@ window.addCatInline = async function() {
   }
 };
 
-window.deleteCatInline = async function(id, name) {
+window.deleteCatInline = async function(id) {
+  const name = categoryMap.get(id)?.name ?? "this category";
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
   await Promise.all([
     db(`DELETE FROM app_recipes__categories WHERE id = ?`, [id]),
@@ -600,10 +608,10 @@ function navHtml() {
   }
   const catItems = categories.map(c => `
     <div class="nav-cat-row">
-      <button class="nav-item${navFilter === "cat:" + c.id ? " active" : ""}" onclick="setNav('cat:${esc(c.id)}')" title="${esc(c.name)}">
+      <button class="nav-item${navFilter === "cat:" + c.id ? " active" : ""}" onclick="setNav('cat:${sid(c.id)}')" title="${esc(c.name)}">
         <span class="cat-dot" style="background:${esc(c.color)}"></span>${esc(c.name)}
       </button>
-      <button class="nav-cat-del" onclick="deleteCatInline('${esc(c.id)}','${esc(c.name)}')" title="Delete">×</button>
+      <button class="nav-cat-del" onclick="deleteCatInline('${sid(c.id)}')" title="Delete">×</button>
     </div>`).join("");
 
   const catForm = showCatForm ? `
@@ -644,7 +652,7 @@ function listHtml() {
     const cats = (r.category_ids ?? []).map(id => categoryMap.get(id)).filter(Boolean);
     const fav = !!r.is_favorite;
     return `
-      <div class="recipe-card" onclick="openDetail('${r.id}')">
+      <div class="recipe-card" onclick="openDetail('${sid(r.id)}')">
         <div class="recipe-card-body">
           <div class="recipe-card-title">${esc(r.title)}</div>
           <div class="recipe-card-meta">
@@ -656,7 +664,7 @@ function listHtml() {
           </div>
         </div>
         <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
-          onclick="event.stopPropagation();doToggleFav('${r.id}',${fav ? 1 : 0})">♥</button>
+          onclick="event.stopPropagation();doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">♥</button>
       </div>`;
   }).join("") : `
     <div class="empty">
@@ -691,9 +699,9 @@ function detailHtml() {
       <div class="detail-actions">
         <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
           style="font-size:1.3rem;padding:6px 5px"
-          onclick="doToggleFav('${r.id}',${fav ? 1 : 0})">♥</button>
-        <button class="btn btn-ghost" onclick="openEdit('${r.id}')">Edit</button>
-        <button class="btn btn-danger" onclick="doDelete('${r.id}')">Delete</button>
+          onclick="doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">♥</button>
+        <button class="btn btn-ghost" onclick="openEdit('${sid(r.id)}')">Edit</button>
+        <button class="btn btn-danger" onclick="doDelete('${sid(r.id)}')">Delete</button>
       </div>
     </div>
 
