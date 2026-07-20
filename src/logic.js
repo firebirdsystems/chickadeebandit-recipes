@@ -18,6 +18,14 @@ export function starDisplay(rating) {
   return "★".repeat(rating) + "☆".repeat(5 - rating);
 }
 
+// Fields the in-app search matches against (see hub-sdk searchMatch). Category
+// names are resolved by the caller (categoryMap lives in the view), so this
+// stays pure. Replaces the old title-only filter — a recipe is now findable by
+// an ingredient, a note, or its category, not just its name.
+export function searchableFields(recipe, categoryNames = []) {
+  return [recipe.title, recipe.description, recipe.ingredients_text, recipe.notes, ...categoryNames];
+}
+
 export function sortRecipes(list, sort) {
   const copy = [...list];
   if (sort === "rating") return copy.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.title.localeCompare(b.title));

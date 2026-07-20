@@ -315,8 +315,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { esc, hubConfirm, crossWrite, isAdult, createShareHelper } from "/hub-sdk.js";
-import { formatTime, difficultyLabel, starDisplay, sortRecipes } from "./logic.js";
+import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, searchMatch } from "/hub-sdk.js";
+import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields } from "./logic.js";
 
 const DB    = window.__DB_URL         ?? "";
 const STORE = window.__STORE_URL      ?? "";
@@ -414,8 +414,10 @@ function getFiltered() {
   }
 
   if (searchQ) {
-    const q = searchQ.toLowerCase();
-    list = list.filter(r => r.title.toLowerCase().includes(q));
+    list = list.filter(r => searchMatch(
+      searchQ,
+      searchableFields(r, (r.category_ids ?? []).map(id => categoryMap.get(id)?.name)),
+    ));
   }
 
   if (navFilter === "top_rated") {

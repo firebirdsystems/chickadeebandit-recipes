@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatTime, difficultyLabel, difficultyColor, starDisplay, sortRecipes } from "../src/logic.js";
+import { formatTime, difficultyLabel, difficultyColor, starDisplay, sortRecipes, searchableFields } from "../src/logic.js";
 
 describe("formatTime", () => {
   it("returns '' for zero/missing minutes", () => {
@@ -64,5 +64,27 @@ describe("sortRecipes", () => {
 
   it("defaults to title order", () => {
     expect(sortRecipes(list, "title").map((r) => r.title)).toEqual(["Apple pie", "Bread", "Curry", "Dumplings"]);
+  });
+});
+
+describe("searchableFields", () => {
+  const recipe = {
+    title: "Chana Masala",
+    description: "Weeknight curry",
+    ingredients_text: "chickpeas\ntomato\ngaram masala",
+    notes: "double the ginger",
+  };
+
+  it("matches beyond the title (ingredients, notes) unlike the old title-only filter", () => {
+    const fields = searchableFields(recipe, ["Vegetarian"]);
+    expect(fields).toContain("chickpeas\ntomato\ngaram masala"); // ingredient search
+    expect(fields).toContain("double the ginger");               // notes search
+    expect(fields).toContain("Vegetarian");                      // category search
+  });
+
+  it("defaults category names to none", () => {
+    expect(searchableFields(recipe)).toEqual([
+      "Chana Masala", "Weeknight curry", "chickpeas\ntomato\ngaram masala", "double the ginger",
+    ]);
   });
 });
