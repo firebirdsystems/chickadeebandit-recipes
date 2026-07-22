@@ -1,5 +1,6 @@
 {
   "id": "recipes",
+  "contexts": ["household", "shared_space"],
   "name": "Recipes",
   "version": "1.0.0",
   "description": "A household recipe book with ingredients, steps, categories, ratings, and difficulty. Add any recipe's ingredients directly to your grocery list.",
