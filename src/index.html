@@ -376,10 +376,43 @@ async function db(sql, params = []) {
   return json;
 }
 
+// Atomic multi-statement form of /api/db — D1 runs a batch transactionally, so
+// the statements land whole or not at all. /api/db caps a batch at 25
+// statements; a recipe save is the row plus one link per category, so a recipe
+// with up to ~23 categories is a single atomic batch and anything larger spans
+// batches, losing atomicity only at that boundary (which is where every single
+// statement was before).
+const MAX_BATCH = 25;
+
+async function dbBatch(statements) {
+  if (!DB || !statements.length) return [];
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ statements }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error ?? `batch failed (${res.status})`);
+  return body.results ?? [];
+}
+
+async function dbBatchAll(statements) {
+  for (let i = 0; i < statements.length; i += MAX_BATCH) {
+    await dbBatch(statements.slice(i, i + MAX_BATCH));
+  }
+}
+
 // ── Data loading ──────────────────────────────────────────────────────────────
+// `SELECT *` is deliberate here, despite the list view only rendering titles and
+// badges. A projection was tried and reverted: in-app search matches against
+// description / ingredients_text / notes (see searchableFields — "findable by an
+// ingredient, not just its name"), and syncExport ships ingredients_text to the
+// grocery and meal-planner apps. Narrowing the columns would have broken both
+// silently, with no error and no failing test. The LIMIT bounds the payload
+// instead; if a cookbook ever outgrows it, paginate rather than project.
 async function loadAll() {
   const [rRes, cRes, rcRes] = await Promise.all([
-    db(`SELECT * FROM app_recipes__recipes ORDER BY title`),
+    db(`SELECT * FROM app_recipes__recipes ORDER BY title LIMIT 500`),
     db(`SELECT * FROM app_recipes__categories ORDER BY name`),
     db(`SELECT recipe_id, category_id FROM app_recipes__recipe_categories`),
   ]);
@@ -501,9 +534,9 @@ window.addCatInline = async function() {
 window.deleteCatInline = async function(id) {
   const name = categoryMap.get(id)?.name ?? "this category";
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
-  await Promise.all([
-    db(`DELETE FROM app_recipes__categories WHERE id = ?`, [id]),
-    db(`DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, [id]),
+  await dbBatch([
+    { sql: `DELETE FROM app_recipes__categories WHERE id = ?`, params: [id] },
+    { sql: `DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, params: [id] },
   ]);
   if (navFilter === "cat:" + id) navFilter = "all";
   await loadAll();
@@ -565,26 +598,41 @@ async function saveRecipe() {
 
   // Persist in the background
   try {
+    // One transactional batch: the recipe row, the category clear, and every
+    // category link. These were issued one statement at a time — an edit was
+    // UPDATE, then DELETE all categories, then one INSERT per category — so a
+    // failure partway through left the recipe saved with a partially applied
+    // (or entirely empty) category set, and the N+1 round trips scaled with the
+    // number of categories on every single save.
+    const statements = [];
     if (!isNew) {
-      await db(
-        `UPDATE app_recipes__recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
-        [data.title, data.description, data.difficulty, data.servings,
-         data.total_time_mins, data.source, data.rating, data.ingredients_text,
-         data.steps_text, data.notes, now, recipeId]);
-      await db(`DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, [recipeId]);
+      statements.push({
+        sql: `UPDATE app_recipes__recipes SET title=?,description=?,difficulty=?,servings=?,total_time_mins=?,source=?,rating=?,ingredients_text=?,steps_text=?,notes=?,updated_at=? WHERE id=?`,
+        params: [data.title, data.description, data.difficulty, data.servings,
+          data.total_time_mins, data.source, data.rating, data.ingredients_text,
+          data.steps_text, data.notes, now, recipeId],
+      });
+      statements.push({
+        sql: `DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`,
+        params: [recipeId],
+      });
     } else {
       const who     = ME?.id   ?? "demo";
       const whoName = ME?.name ?? "Demo";
-      await db(
-        `INSERT INTO app_recipes__recipes (id,title,description,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
-        [recipeId, data.title, data.description, data.difficulty,
-         data.servings, data.total_time_mins, data.source, data.rating,
-         data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now]);
+      statements.push({
+        sql: `INSERT INTO app_recipes__recipes (id,title,description,difficulty,servings,total_time_mins,source,rating,ingredients_text,steps_text,notes,is_favorite,created_by_id,created_by_name,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)`,
+        params: [recipeId, data.title, data.description, data.difficulty,
+          data.servings, data.total_time_mins, data.source, data.rating,
+          data.ingredients_text, data.steps_text, data.notes, who, whoName, now, now],
+      });
     }
-
     for (const catId of catIds) {
-      await db(`INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [recipeId, catId]);
+      statements.push({
+        sql: `INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)`,
+        params: [recipeId, catId],
+      });
     }
+    await dbBatchAll(statements);
 
     await Promise.all([loadAll(), syncExport()]);
     currentRecipe = recipes.find(r => r.id === recipeId) ?? currentRecipe;
@@ -599,8 +647,10 @@ async function saveRecipe() {
 
 async function deleteRecipe(id) {
   if (!await hubConfirm({ message: "Delete this recipe?", confirmLabel: "Delete", destructive: true })) return;
-  await db(`DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, [id]);
-  await db(`DELETE FROM app_recipes__recipes WHERE id = ?`, [id]);
+  await dbBatch([
+    { sql: `DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, params: [id] },
+    { sql: `DELETE FROM app_recipes__recipes WHERE id = ?`, params: [id] },
+  ]);
   await Promise.all([loadAll(), syncExport()]);
   currentRecipe = null;
   rightView = "list";
