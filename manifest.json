@@ -31,6 +31,65 @@
   "nav": {
     "label": "Recipes"
   },
+  "publishes": ["recipe.added"],
+  "publish_acls": {
+    "recipe.added": { "require_role": "member" }
+  },
+  "automation_actions": {
+    "add_recipe": {
+      "title": "Save a recipe",
+      "description": "Put a recipe in the household book when another app's event carries one - something captured from a photo, an email, or a link shared into the house.",
+      "params": {
+        "created_by_id": {
+          "type": "member",
+          "label": "Saved for",
+          "required": true
+        },
+        "title": {
+          "type": "text",
+          "label": "Recipe name",
+          "required": true
+        },
+        "ingredients_text": {
+          "type": "text",
+          "label": "Ingredients",
+          "default": ""
+        },
+        "steps_text": {
+          "type": "text",
+          "label": "Steps",
+          "default": ""
+        },
+        "source": {
+          "type": "text",
+          "label": "Where it came from",
+          "default": ""
+        }
+      },
+      "dedupe": {
+        "table": "recipes",
+        "column": "source_event_id"
+      },
+      "steps": [
+        {
+          "op": "insert",
+          "table": "recipes",
+          "values": {
+            "id": "$uuid",
+            "title": ":title",
+            "ingredients_text": ":ingredients_text",
+            "steps_text": ":steps_text",
+            "source": ":source",
+            "created_by_id": ":created_by_id",
+            "created_by_name": "Automation",
+            "created_at": "$now",
+            "updated_at": "$now",
+            "source_event_id": "$event_id"
+          }
+        }
+      ]
+    }
+  },
   "shareable": {
     "recipe": {
       "table": "recipes",

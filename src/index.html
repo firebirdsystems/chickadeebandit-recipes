@@ -320,6 +320,22 @@ import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields
 
 const DB    = window.__DB_URL         ?? "";
 const STORE = window.__STORE_URL      ?? "";
+const EVENTS = window.__EVENTS_URL    ?? "";
+
+/** Best-effort publish onto the household event bus. The row is already
+ *  written, so a failed publish is not fatal and must never roll it back. */
+async function publishEvent(type, subjectId, payload = {}) {
+  if (!EVENTS) return;
+  try {
+    await fetch(EVENTS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, subject_id: subjectId, payload }),
+    });
+  } catch {
+    /* ignore */
+  }
+}
 const ME    = window.__CURRENT_MEMBER ?? null;
 const share = createShareHelper(window.__SHARE_CREATE_URL, window.__SHARE_REVOKE_URL, window.__SHARE_LIST_URL);
 
@@ -633,6 +649,15 @@ async function saveRecipe() {
       });
     }
     await dbBatchAll(statements);
+
+    // A new recipe is news; an edit to an existing one is not.
+    if (isNew) {
+      await publishEvent("recipe.added", recipeId, {
+        title: data.title,
+        difficulty: data.difficulty,
+        servings: data.servings,
+      });
+    }
 
     await Promise.all([loadAll(), syncExport()]);
     currentRecipe = recipes.find(r => r.id === recipeId) ?? currentRecipe;
