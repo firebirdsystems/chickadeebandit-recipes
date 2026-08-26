@@ -7,6 +7,11 @@
   "entrypoint": "index.html",
   "runtime": "static",
   "storage": "db",
+  "preload": {
+    "recipes": {"sql": "SELECT * FROM app_recipes__recipes ORDER BY title LIMIT 500"},
+    "categories": {"sql": "SELECT * FROM app_recipes__categories ORDER BY name"},
+    "recipe_categories": {"sql": "SELECT recipe_id, category_id FROM app_recipes__recipe_categories"}
+  },
   "db_encryption": "off",
   "category": "family",
   "tags": ["recipes", "food", "cooking", "ingredients"],
