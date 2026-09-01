@@ -10,7 +10,7 @@
   "preload": {
     "recipes": {"sql": "SELECT * FROM app_recipes__recipes ORDER BY title LIMIT 500"},
     "categories": {"sql": "SELECT * FROM app_recipes__categories ORDER BY name"},
-    "recipe_categories": {"sql": "SELECT recipe_id, category_id FROM app_recipes__recipe_categories"}
+    "recipe_categories": {"sql": "SELECT recipe_id, category_id FROM app_recipes__recipe_categories WHERE recipe_id IN (SELECT id FROM app_recipes__recipes ORDER BY title LIMIT 500)"}
   },
   "db_encryption": "off",
   "category": "family",

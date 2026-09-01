@@ -430,7 +430,7 @@ async function loadAll() {
   const [rRes, cRes, rcRes] = await Promise.all([
     db(`SELECT * FROM app_recipes__recipes ORDER BY title LIMIT 500`),
     db(`SELECT * FROM app_recipes__categories ORDER BY name`),
-    db(`SELECT recipe_id, category_id FROM app_recipes__recipe_categories`),
+    db(`SELECT recipe_id, category_id FROM app_recipes__recipe_categories WHERE recipe_id IN (SELECT id FROM app_recipes__recipes ORDER BY title LIMIT 500)`),
   ]);
   categories = cRes.rows;
   categoryMap = new Map(categories.map(c => [c.id, c]));
