@@ -18,9 +18,9 @@
       --accent-fg:    var(--hub-primary-fg, #fff);
       --radius:       var(--hub-radius, 0.5rem);
       --shadow:       0 1px 3px rgba(0,0,0,.07);
-      --green: #059669; --amber: #d97706; --red: #dc2626;
-      --amber-bg: #fffbeb; --amber-border: #fcd34d;
-      --green-bg: #f0fdf4; --red-bg: #fef2f2;
+      --green: var(--hub-tint-success-fg, #059669); --amber: var(--hub-tint-warning-fg, #d97706); --red: #dc2626; --red-ink: var(--hub-tint-danger-fg, #dc2626);
+      --amber-bg: var(--hub-tint-warning, #fffbeb); --amber-border: var(--hub-tint-warning-border, #fcd34d);
+      --green-bg: var(--hub-tint-success, #f0fdf4); --red-bg: var(--bg);
     }
 
     html, body { height: 100%; overflow: hidden; }
@@ -83,7 +83,7 @@
       cursor: pointer; padding: 0 8px; opacity: 0; flex-shrink: 0; transition: opacity .12s, color .12s;
     }
     .nav-cat-row:hover .nav-cat-del { opacity: 1; }
-    .nav-cat-del:hover { color: var(--red); }
+    .nav-cat-del:hover { color: var(--red-ink); }
     .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
     .nav-divider { height: 1px; background: var(--border); margin: 6px 0; }
 
@@ -146,7 +146,7 @@
       cursor: pointer; padding: 4px 3px; border-radius: 6px; flex-shrink: 0;
       color: #d1d5db; transition: color .12s, background .12s;
     }
-    .heart-btn:hover { color: #f43f5e; background: #fff1f2; }
+    .heart-btn:hover { color: var(--hub-tint-danger-fg, #f43f5e); background: var(--hub-tint-danger, #fff1f2); }
     .heart-btn.on { color: #f43f5e; }
 
     /* ── FAB ── */
@@ -193,12 +193,12 @@
     .btn-primary { background: var(--accent); color: var(--accent-fg); }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-primary:disabled { opacity: .45; cursor: default; }
-    .btn-amber { background: var(--amber-bg); color: #92400e; border: 1.5px solid var(--amber-border); }
-    .btn-amber:hover { background: #fef3c7; }
+    .btn-amber { background: var(--amber-bg); color: var(--hub-tint-warning-fg, #92400e); border: 1.5px solid var(--amber-border); }
+    .btn-amber:hover { background: var(--hub-tint-warning, #fef3c7); }
     .btn-ghost { background: none; color: var(--muted); border: 1.5px solid var(--border); }
     .btn-ghost:hover { border-color: var(--text); color: var(--text); }
-    .btn-danger { background: var(--red-bg); color: var(--red); border: 1.5px solid #fecaca; }
-    .btn-danger:hover { background: #fee2e2; }
+    .btn-danger { background: var(--red-bg); color: var(--red-ink); border: 1.5px solid #fecaca; }
+    .btn-danger:hover { background: var(--hub-tint-danger, #fee2e2); }
     .back-btn {
       background: none; border: none; color: var(--muted); font-size: 1.1rem;
       cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; display: none;
@@ -242,12 +242,12 @@
     }
     .diff-btn.easy.active  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
     .diff-btn.medium.active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
-    .diff-btn.hard.active  { background: var(--red-bg);   border-color: var(--red);   color: var(--red); }
+    .diff-btn.hard.active  { background: var(--red-bg);   border-color: var(--red);   color: var(--red-ink); }
     .stars-input { display: flex; gap: 4px; }
     .star-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #d1d5db; padding: 0 2px; transition: color .1s; }
     .star-btn.on { color: #f59e0b; }
     .row-del { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 8px 6px; border-radius: 6px; flex-shrink: 0; }
-    .row-del:hover { background: var(--red-bg); color: var(--red); }
+    .row-del:hover { background: var(--red-bg); color: var(--red-ink); }
     .form-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
     /* ── Toast ── */
