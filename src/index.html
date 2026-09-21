@@ -315,7 +315,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, searchMatch } from "/hub-sdk.js";
+import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, searchMatch, activeShareLinks, SHARE_EXPIRY_CHOICES, DEFAULT_SHARE_EXPIRY_HOURS } from "/hub-sdk.js";
 import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields } from "./logic.js";
 
 const DB    = window.__DB_URL         ?? "";
@@ -826,7 +826,7 @@ function detailHtml() {
 function shareModalHtml() {
   const r = currentRecipe;
   if (!r) return "";
-  const active = shareLinks.filter(l => l.itemId === r.id && !l.revokedAt && new Date(l.expiresAt) > new Date());
+  const active = activeShareLinks(shareLinks, r.id);
   const rows = active.map(l => `
     <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
@@ -850,9 +850,8 @@ function shareModalHtml() {
         ${rows || `<p style="font-size:0.85rem;color:var(--muted);padding:8px 0">No active links yet.</p>`}
         <div style="display:flex;gap:8px;align-items:center;margin-top:14px">
           <select id="share-expiry" style="padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:0.85rem">
-            <option value="24">1 day</option>
-            <option value="168" selected>7 days</option>
-            <option value="720">30 days</option>
+            ${SHARE_EXPIRY_CHOICES.map(({ hours, label }) =>
+              `<option value="${hours}"${hours === DEFAULT_SHARE_EXPIRY_HOURS ? " selected" : ""}>${label}</option>`).join("")}
           </select>
           <button class="btn btn-amber" ${shareBusy ? "disabled" : ""} onclick="doCreateShare()">
             ${shareBusy ? "Creating…" : "Create link"}
@@ -1017,7 +1016,7 @@ window.doAddToGrocery  = async function() {
 };
 window.openShare = async function() {
   shareOpen = true; shareBusy = false;
-  shareLinks = await share.list();
+  shareLinks = (await share.listAll()).links;
   render();
 };
 window.closeShare = function() {
@@ -1028,7 +1027,7 @@ window.doCreateShare = async function() {
   shareBusy = true; render();
   try {
     const link = await share.create("recipe", currentRecipe.id, { expiresInHours: hours, label: currentRecipe.title });
-    shareLinks = await share.list();
+    shareLinks = (await share.listAll()).links;
     shareBusy = false; render();
     try { await navigator.clipboard.writeText(link.url); showToast("Link created and copied"); }
     catch { showToast("Link created"); }
@@ -1047,7 +1046,7 @@ window.doRevokeShare = async function(id) {
   if (!await hubConfirm("Revoke this share link?", { description: "Anyone using it will immediately lose access.", confirmLabel: "Revoke" })) return;
   try {
     await share.revoke(id);
-    shareLinks = await share.list();
+    shareLinks = (await share.listAll()).links;
     render();
     showToast("Link revoked");
   } catch (err) {
