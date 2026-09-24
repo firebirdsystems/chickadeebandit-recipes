@@ -1,0 +1,102 @@
+{
+  "scenarios": [
+    {
+      "name": "all_recipes lists every recipe with its category names rolled up",
+      "members": { "cook": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__categories (id, name, created_at) VALUES ('c-din', 'Dinner', '2026-01-01T00:00:00Z'), ('c-veg', 'Vegetarian', '2026-01-01T00:00:00Z')"
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__recipes (id, title, created_by_id, created_by_name, created_at, updated_at) VALUES ('r1', 'Lentil curry', ?, 'Cook', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'), ('r2', 'Plain rice', ?, 'Cook', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{cook}}", "{{cook}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES ('r1', 'c-veg')"
+        },
+        {
+          "action": "named",
+          "as": "cook",
+          "kind": "query",
+          "name": "all_recipes",
+          "expect": {
+            "status": 200,
+            "rowCount": 2,
+            "rowsContain": [
+              { "id": "r1", "title": "Lentil curry", "categories": "Vegetarian" },
+              { "id": "r2", "title": "Plain rice", "categories": "" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "favorites returns only recipes marked favorite",
+      "members": { "cook": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__recipes (id, title, is_favorite, rating, created_by_id, created_by_name, created_at, updated_at) VALUES ('r-fav', 'Grandma pie', 1, 5, ?, 'Cook', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'), ('r-meh', 'Toast', 0, 2, ?, 'Cook', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{cook}}", "{{cook}}"]
+        },
+        {
+          "action": "named",
+          "as": "cook",
+          "kind": "query",
+          "name": "favorites",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "r-fav", "title": "Grandma pie", "rating": 5 }] }
+        }
+      ]
+    },
+    {
+      "name": "the recipe book is household-shared: one member's recipe is visible to another, including a child",
+      "members": { "cook": "adult", "other": "adult", "kid": "child" },
+      "steps": [
+        {
+          "action": "db",
+          "as": "cook",
+          "sql": "INSERT INTO app_recipes__recipes (id, title, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+          "params": ["r1", "Banana bread", "{{cook}}", "Cook", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id, title FROM app_recipes__recipes",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "r1", "title": "Banana bread" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id FROM app_recipes__recipes",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "r1" }] }
+        }
+      ]
+    },
+    {
+      "name": "any signed-in member may announce a newly added recipe",
+      "members": { "cook": "adult", "kid": "child" },
+      "steps": [
+        {
+          "action": "publish",
+          "as": "cook",
+          "type": "recipe.added",
+          "subject_id": "r1",
+          "payload": { "title": "Banana bread", "difficulty": "easy", "servings": 8 },
+          "expect": { "status": 201 }
+        },
+        {
+          "action": "publish",
+          "as": "kid",
+          "type": "recipe.added",
+          "subject_id": "r2",
+          "payload": { "title": "Smoothie", "difficulty": "easy", "servings": 1 },
+          "expect": { "status": 201 }
+        }
+      ]
+    }
+  ]
+}
