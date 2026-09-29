@@ -16,6 +16,60 @@
   "category": "family",
   "tags": ["recipes", "food", "cooking", "ingredients"],
   "exports": ["recipes"],
+  "export_schemas": {
+    "recipes": {
+      "description": "Recipe summaries Family Meals plans from.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "servings": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "total_time_mins": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rating": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ingredients_text": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
   "data_access": {
     "reads": ["family.members"],
     "writes": ["app.grocery.pending_items"]

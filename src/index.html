@@ -506,8 +506,8 @@ async function addToGrocery(recipe) {
   try {
     await crossWrite("grocery", "pending_items", ops);
     showToast(`${items.length} item${items.length !== 1 ? "s" : ""} added to grocery list`);
-  } catch {
-    showToast("Grocery app not available", "error");
+  } catch (e) {
+    showToast(e?.code === "EXPORT_SCHEMA_VIOLATION" ? e.message : "Grocery app not available", "error");
   }
 }
 
