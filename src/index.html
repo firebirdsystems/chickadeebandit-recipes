@@ -276,7 +276,7 @@
 
     /* ── Empty / loading ── */
     .empty { text-align: center; padding: 48px 16px; color: var(--muted); }
-    .empty-icon { font-size: 3rem; margin-bottom: 10px; }
+    .empty-icon { margin-bottom: 10px; }
     .loading { text-align: center; padding: 48px; color: var(--muted); }
 
     /* ── Mobile ── */
@@ -315,7 +315,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, searchMatch, activeShareLinks, SHARE_EXPIRY_CHOICES, DEFAULT_SHARE_EXPIRY_HOURS } from "/hub-sdk.js";
+import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, glyph, chickadee, searchMatch, activeShareLinks, SHARE_EXPIRY_CHOICES, DEFAULT_SHARE_EXPIRY_HOURS } from "/hub-sdk.js";
 import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields } from "./logic.js";
 
 const DB    = window.__DB_URL         ?? "";
@@ -703,7 +703,7 @@ function navHtml() {
         <input id="new-cat-color" type="color" value="#6366f1"
           style="width:30px;height:28px;border:1px solid var(--border);border-radius:5px;cursor:pointer;flex-shrink:0;padding:1px" />
         <button onclick="addCatInline()" class="btn btn-primary" style="flex:1;padding:5px 10px;font-size:0.8rem">Add</button>
-        <button onclick="toggleCatForm()" class="btn btn-ghost" style="padding:5px 9px;font-size:0.85rem">✕</button>
+        <button onclick="toggleCatForm()" class="btn btn-ghost" style="padding:5px 9px;font-size:0.85rem" aria-label="Cancel">${glyph("close")}</button>
       </div>
     </div>` : "";
 
@@ -739,18 +739,18 @@ function listHtml() {
           <div class="recipe-card-meta">
             <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
             ${cats.map(cat => `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>`).join("")}
-            ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
-            ${r.servings        ? `<span class="meta-text">👥 ${r.servings}</span>` : ""}
+            ${r.total_time_mins ? `<span class="meta-text">${glyph("hourglass")} ${formatTime(r.total_time_mins)}</span>` : ""}
+            ${r.servings        ? `<span class="meta-text">${glyph("people")} ${r.servings}</span>` : ""}
             ${r.rating          ? `<span class="stars">${starDisplay(r.rating)}</span>` : ""}
           </div>
         </div>
         <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
-          onclick="event.stopPropagation();doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">♥</button>
+          onclick="event.stopPropagation();doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">${glyph("heart", { accent: "currentColor" })}</button>
       </div>`;
   }).join("") : `
     <div class="empty">
-      <div class="empty-icon">📖</div>
-      <p>${searchQ ? "No recipes match your search." : navFilter === "favorites" ? "No favorites yet — click ♥ on a recipe." : "No recipes here yet."}</p>
+      <div class="empty-icon">${chickadee(searchQ ? "searching" : "nest")}</div>
+      <p>${searchQ ? "No recipes match your search." : navFilter === "favorites" ? `No favorites yet — click ${glyph("heart")} on a recipe.` : "No recipes here yet."}</p>
     </div>`;
 
   return `
@@ -780,7 +780,7 @@ function detailHtml() {
       <div class="detail-actions">
         <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
           style="font-size:1.3rem;padding:6px 5px"
-          onclick="doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">♥</button>
+          onclick="doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">${glyph("heart", { accent: "currentColor" })}</button>
         ${share.enabled && isAdult(ME) ? `<button class="btn btn-ghost" onclick="openShare()">Share</button>` : ""}
         <button class="btn btn-ghost" onclick="openEdit('${sid(r.id)}')">Edit</button>
         <button class="btn btn-danger" onclick="doDelete('${sid(r.id)}')">Delete</button>
@@ -790,8 +790,8 @@ function detailHtml() {
     <div class="detail-meta-row">
       <span class="badge badge-${r.difficulty}">${difficultyLabel(r.difficulty)}</span>
       ${cats.map(cat => `<span class="badge badge-cat" style="background:${esc(cat.color)}">${esc(cat.name)}</span>`).join("")}
-      ${r.total_time_mins ? `<span class="meta-text">⏱ ${formatTime(r.total_time_mins)}</span>` : ""}
-      ${r.servings        ? `<span class="meta-text">👥 ${r.servings} servings</span>` : ""}
+      ${r.total_time_mins ? `<span class="meta-text">${glyph("hourglass")} ${formatTime(r.total_time_mins)}</span>` : ""}
+      ${r.servings        ? `<span class="meta-text">${glyph("people")} ${r.servings} servings</span>` : ""}
       ${r.rating          ? `<span class="stars" title="${r.rating}/5 stars">${starDisplay(r.rating)}</span>` : ""}
     </div>
 
@@ -819,7 +819,7 @@ function detailHtml() {
       </div>` : ""}
 
     <div class="detail-footer">
-      ${hasIngredients ? `<button class="btn btn-amber" id="grocery-btn" onclick="doAddToGrocery()">🛒 Add to Grocery</button>` : ""}
+      ${hasIngredients ? `<button class="btn btn-amber" id="grocery-btn" onclick="doAddToGrocery()">${glyph("grocery")} Add to Grocery</button>` : ""}
     </div>`;
 }
 
@@ -920,7 +920,7 @@ function formHtml() {
         <label>Rating</label>
         <div class="stars-input">
           ${starsHtml}
-          <button class="row-del" onclick="setRating(0)" title="Clear rating" style="font-size:0.8rem">✕</button>
+          <button class="row-del" onclick="setRating(0)" title="Clear rating" aria-label="Clear rating" style="font-size:0.8rem">${glyph("close")}</button>
         </div>
       </div>
       <div class="field">
@@ -1012,7 +1012,7 @@ window.doAddToGrocery  = async function() {
   const btn = document.getElementById("grocery-btn");
   if (btn) { btn.disabled = true; btn.textContent = "Adding…"; }
   await addToGrocery(currentRecipe);
-  if (btn) { btn.disabled = false; btn.textContent = "🛒 Add to Grocery"; }
+  if (btn) { btn.disabled = false; btn.innerHTML = `${glyph("grocery")} Add to Grocery`; }
 };
 window.openShare = async function() {
   shareOpen = true; shareBusy = false;
