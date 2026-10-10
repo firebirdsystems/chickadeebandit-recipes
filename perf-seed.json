@@ -1,0 +1,491 @@
+{
+ "seed": [
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-30 days'))",
+   "params": [
+    "rcc-1",
+    "Weeknight dinners",
+    "#3b82f6"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-29 days'))",
+   "params": [
+    "rcc-2",
+    "Breakfast",
+    "#f59e0b"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days'))",
+   "params": [
+    "rcc-3",
+    "Baking",
+    "#ec4899"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-27 days'))",
+   "params": [
+    "rcc-4",
+    "Soups & stews",
+    "#10b981"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-26 days'))",
+   "params": [
+    "rcc-5",
+    "Vegetarian",
+    "#22c55e"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days'))",
+   "params": [
+    "rcc-6",
+    "Kid favourites",
+    "#8b5cf6"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, notes, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 75, ?, 5, ?, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','-0 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','-0 minutes'))",
+   "params": [
+    "rcr-01",
+    "Spaghetti Bolognese",
+    "Slow-simmered beef ragù over spaghetti.",
+    "medium",
+    "Nonna's recipe card",
+    "1 tbsp olive oil\n1 onion, finely diced\n2 carrots, grated\n2 cloves garlic\n500 g beef mince\n400 g tin chopped tomatoes\n2 tbsp tomato paste\n1 cup beef stock\n400 g spaghetti\nParmesan, to serve",
+    "1. Soften the onion and carrot in oil for 8 minutes.\n2. Add garlic and mince; brown well.\n3. Stir in tomatoes, paste and stock. Simmer 45 minutes.\n4. Cook the spaghetti, toss with sauce and serve with Parmesan.",
+    "Doubles well — freeze half.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 35, 4, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-27 days','-13 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-27 days','-13 minutes'))",
+   "params": [
+    "rcr-02",
+    "Sheet-Pan Chicken Fajitas",
+    "Everything roasts on one tray.",
+    "easy",
+    "600 g chicken thighs, sliced\n3 bell peppers, sliced\n1 red onion, sliced\n2 tbsp fajita seasoning\n2 tbsp olive oil\n8 small tortillas\n1 lime\nSour cream",
+    "1. Heat oven to 220°C.\n2. Toss chicken, peppers and onion with oil and seasoning.\n3. Roast 22 minutes, turning once.\n4. Squeeze over lime and serve in warm tortillas.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, notes, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 25, ?, 5, ?, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-26 days','-26 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-26 days','-26 minutes'))",
+   "params": [
+    "rcr-03",
+    "Buttermilk Pancakes",
+    "Fluffy Saturday-morning pancakes.",
+    "easy",
+    "Back of the buttermilk carton",
+    "2 cups plain flour\n2 tbsp sugar\n2 tsp baking powder\n1/2 tsp baking soda\n2 cups buttermilk\n2 eggs\n3 tbsp melted butter\nMaple syrup",
+    "1. Whisk the dry ingredients.\n2. Whisk buttermilk, eggs and butter; fold into the dry mix. Leave lumpy.\n3. Rest 5 minutes.\n4. Cook on a medium griddle until bubbles pop, flip, 1 minute more.",
+    "Add blueberries after pouring, not in the batter.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 5, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days','-39 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days','-39 minutes'))",
+   "params": [
+    "rcr-04",
+    "Overnight Oats",
+    "Make five jars on Sunday.",
+    "easy",
+    "1/2 cup rolled oats\n1/2 cup milk\n1/4 cup yoghurt\n1 tbsp chia seeds\n1 tsp honey\nBerries",
+    "1. Stir everything except the berries in a jar.\n2. Refrigerate overnight.\n3. Top with berries.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, notes, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 8, 70, ?, 5, ?, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-24 days','-52 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-24 days','-52 minutes'))",
+   "params": [
+    "rcr-05",
+    "Banana Bread",
+    "Uses up the three brown bananas.",
+    "easy",
+    "Grandma June",
+    "3 ripe bananas\n1/3 cup melted butter\n3/4 cup sugar\n1 egg\n1 tsp vanilla\n1 tsp baking soda\nPinch of salt\n1 1/2 cups plain flour\n1/2 cup walnuts",
+    "1. Heat oven to 175°C and line a loaf tin.\n2. Mash bananas with butter.\n3. Stir in sugar, egg and vanilla, then soda, salt and flour.\n4. Fold in walnuts and bake 55–60 minutes.",
+    "Leave the walnuts out for school lunches.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, notes, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 24, 40, 5, ?, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','-65 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','-65 minutes'))",
+   "params": [
+    "rcr-06",
+    "Chocolate Chip Cookies",
+    "Crisp edges, soft middles.",
+    "medium",
+    "225 g butter, browned\n1 cup brown sugar\n1/2 cup white sugar\n2 eggs\n2 tsp vanilla\n2 3/4 cups flour\n1 tsp baking soda\n1 tsp salt\n300 g dark chocolate chunks",
+    "1. Brown the butter and cool 10 minutes.\n2. Beat with sugars, then eggs and vanilla.\n3. Fold in flour, soda, salt and chocolate.\n4. Chill 30 minutes. Bake at 180°C for 11 minutes.",
+    "Chilling the dough is not optional.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 8, 960, ?, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','-78 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','-78 minutes'))",
+   "params": [
+    "rcr-07",
+    "Sourdough Focaccia",
+    "Overnight dough, bake before dinner.",
+    "hard",
+    "The bread book",
+    "500 g bread flour\n400 g water\n100 g active starter\n10 g salt\n4 tbsp olive oil\nFlaky salt\nRosemary",
+    "1. Mix flour, water and starter; rest 30 minutes.\n2. Add salt. Four folds over 2 hours.\n3. Refrigerate overnight.\n4. Tip into an oiled tray, proof 3 hours, dimple, top and bake at 230°C for 25 minutes.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 6, 50, 5, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-21 days','-91 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-21 days','-91 minutes'))",
+   "params": [
+    "rcr-08",
+    "Chicken Noodle Soup",
+    "The one for sick days.",
+    "easy",
+    "1 tbsp butter\n1 onion, diced\n3 carrots, sliced\n3 celery sticks, sliced\n2 litres chicken stock\n2 chicken breasts\n200 g egg noodles\nParsley\nLemon",
+    "1. Soften the vegetables in butter.\n2. Add stock and chicken; simmer 20 minutes.\n3. Shred the chicken and return with the noodles for 8 minutes.\n4. Finish with parsley and lemon.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 30, 5, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-104 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-104 minutes'))",
+   "params": [
+    "rcr-09",
+    "Red Lentil Dal",
+    "Pantry dinner in half an hour.",
+    "easy",
+    "1 1/2 cups red lentils\n1 onion\n3 cloves garlic\nThumb of ginger\n1 tbsp curry powder\n1 tsp turmeric\n400 ml coconut milk\n3 cups water\nSpinach\nRice, to serve",
+    "1. Fry onion, garlic and ginger. Add the spices.\n2. Add lentils, coconut milk and water. Simmer 20 minutes.\n3. Stir through spinach and season.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 6, 150, ?, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','-117 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','-117 minutes'))",
+   "params": [
+    "rcr-10",
+    "Beef and Barley Stew",
+    "Better on day two.",
+    "medium",
+    "Uncle Rob",
+    "800 g stewing beef\n2 tbsp flour\n2 onions\n3 carrots\n2 parsnips\n3/4 cup pearl barley\n1 litre beef stock\n2 tbsp Worcestershire sauce\nThyme\nBay leaf",
+    "1. Flour and brown the beef in batches.\n2. Soften the vegetables, return the beef, add stock and herbs.\n3. Simmer covered 90 minutes.\n4. Add barley and cook 40 minutes more.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 55, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-18 days','-130 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-18 days','-130 minutes'))",
+   "params": [
+    "rcr-11",
+    "Roasted Tomato Soup",
+    "With grilled cheese, obviously.",
+    "easy",
+    "1.2 kg ripe tomatoes, halved\n1 red onion, quartered\n6 cloves garlic\n3 tbsp olive oil\n2 cups vegetable stock\nBasil\nSplash of cream",
+    "1. Roast tomatoes, onion and garlic at 200°C for 40 minutes.\n2. Blend with stock and basil.\n3. Warm through and finish with cream.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 3, 20, 3, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','-143 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','-143 minutes'))",
+   "params": [
+    "rcr-12",
+    "Vegetable Stir-Fry",
+    "Whatever is in the crisper.",
+    "easy",
+    "1 block firm tofu, cubed\n1 head broccoli\n1 red pepper\n2 carrots\n3 tbsp soy sauce\n1 tbsp rice vinegar\n1 tbsp honey\n1 tsp cornflour\nSesame oil\nRice",
+    "1. Crisp the tofu and set aside.\n2. Stir-fry the vegetables on high heat for 4 minutes.\n3. Add the sauce and tofu; toss until glossy.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, notes, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 120, 5, ?, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','-156 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','-156 minutes'))",
+   "params": [
+    "rcr-13",
+    "Margherita Pizza",
+    "Friday pizza night dough and sauce.",
+    "medium",
+    "500 g 00 flour\n325 g water\n7 g instant yeast\n10 g salt\n400 g tin San Marzano tomatoes\n250 g fresh mozzarella\nBasil\nOlive oil",
+    "1. Mix and knead the dough; rise 90 minutes.\n2. Crush tomatoes with salt.\n3. Shape four bases, top, and bake on a hot stone at max heat for 7 minutes.",
+    "Kids do their own toppings on quarter trays.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 25, 4, ?, ?, 1, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days','-169 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days','-169 minutes'))",
+   "params": [
+    "rcr-14",
+    "Mac and Cheese",
+    "Stovetop, no baking.",
+    "easy",
+    "350 g macaroni\n3 tbsp butter\n3 tbsp flour\n2 1/2 cups milk\n250 g sharp cheddar, grated\n1 tsp mustard\nSalt and pepper",
+    "1. Cook the pasta.\n2. Make a roux, whisk in milk and simmer until thick.\n3. Off the heat, melt in the cheese and mustard.\n4. Fold in the pasta.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 3, 30, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-182 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-182 minutes'))",
+   "params": [
+    "rcr-15",
+    "Shakshuka",
+    "Eggs poached in spiced tomato.",
+    "medium",
+    "1 onion\n1 red pepper\n3 cloves garlic\n2 tsp cumin\n2 tsp paprika\n800 g chopped tomatoes\n5 eggs\nFeta\nCoriander\nCrusty bread",
+    "1. Soften onion and pepper; add garlic and spices.\n2. Add tomatoes and simmer 10 minutes.\n3. Make wells, crack in eggs, cover 6 minutes.\n4. Top with feta and coriander.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, source, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 10, 65, ?, 5, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-195 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-195 minutes'))",
+   "params": [
+    "rcr-16",
+    "Lemon Drizzle Loaf",
+    "Sharp, sticky, gone by Tuesday.",
+    "easy",
+    "School fête cookbook",
+    "225 g butter\n225 g caster sugar\n4 eggs\n225 g self-raising flour\nZest of 2 lemons\nJuice of 2 lemons\n85 g icing sugar",
+    "1. Cream butter and sugar; beat in eggs.\n2. Fold in flour and zest. Bake at 180°C for 45 minutes.\n3. Mix juice and icing sugar; pour over the warm loaf.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 8, 490, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-208 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-208 minutes'))",
+   "params": [
+    "rcr-17",
+    "Slow-Cooker Pulled Pork",
+    "Eight hours, ten minutes of work.",
+    "easy",
+    "2 kg pork shoulder\n2 tbsp brown sugar\n1 tbsp smoked paprika\n1 tbsp salt\n1 tsp garlic powder\n1 cup apple cider\n1 cup barbecue sauce\nBrioche buns\nColeslaw",
+    "1. Rub the pork and place in the slow cooker with the cider.\n2. Cook on low 8 hours.\n3. Shred, stir in the sauce and pile onto buns.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 15, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-221 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-221 minutes'))",
+   "params": [
+    "rcr-18",
+    "Greek Salad",
+    "Summer side for everything.",
+    "easy",
+    "4 tomatoes\n1 cucumber\n1 red onion\n1 green pepper\n200 g feta\nKalamata olives\n3 tbsp olive oil\n1 tbsp red wine vinegar\nOregano",
+    "1. Chop the vegetables into chunks.\n2. Top with feta and olives.\n3. Dress with oil, vinegar and oregano.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 4, 25, 5, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-234 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-234 minutes'))",
+   "params": [
+    "rcr-19",
+    "Salmon with Miso Glaze",
+    "Fast enough for a Tuesday.",
+    "medium",
+    "4 salmon fillets\n2 tbsp white miso\n1 tbsp soy sauce\n1 tbsp honey\n1 tbsp rice vinegar\nSpring onions\nSesame seeds\nRice\nPak choi",
+    "1. Whisk the glaze and coat the salmon.\n2. Grill 8–10 minutes until lacquered.\n3. Serve on rice with steamed pak choi.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipes (id, title, description, difficulty, servings, total_time_mins, rating, ingredients_text, steps_text, is_favorite, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, 12, 45, 4, ?, ?, 0, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-247 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-247 minutes'))",
+   "params": [
+    "rcr-20",
+    "Granola",
+    "Big batch, lasts two weeks.",
+    "easy",
+    "4 cups rolled oats\n1 cup almonds\n1/2 cup pumpkin seeds\n1/2 cup maple syrup\n1/3 cup olive oil\n1 tsp cinnamon\n1 tsp salt\n1 cup dried cherries",
+    "1. Toss everything except the cherries.\n2. Bake at 160°C for 35 minutes, stirring once.\n3. Cool completely, then add the cherries.",
+    "{{me}}",
+    "Adam"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-01",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-02",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-03",
+    "rcc-2"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-04",
+    "rcc-2"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-05",
+    "rcc-3"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-06",
+    "rcc-3"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-07",
+    "rcc-3"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-08",
+    "rcc-4"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-09",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-10",
+    "rcc-4"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-11",
+    "rcc-4"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-12",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-13",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-14",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-15",
+    "rcc-2"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-16",
+    "rcc-3"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-17",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-18",
+    "rcc-5"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-19",
+    "rcc-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-20",
+    "rcc-2"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-01",
+    "rcc-6"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-02",
+    "rcc-6"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-03",
+    "rcc-6"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?)",
+   "params": [
+    "rcr-04",
+    "rcc-5"
+   ]
+  }
+ ]
+}
