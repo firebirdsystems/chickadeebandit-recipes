@@ -260,6 +260,7 @@
     }
     .toast.show { opacity: 1; }
     .toast.error { background: #7f1d1d; }
+    .save-error { color: var(--red-ink); font-size: 0.8rem; margin-top: 6px; }
 
     /* ── Modal ── */
     .modal-backdrop {
@@ -318,7 +319,7 @@
 
 <script type="module">
 import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, glyph, chickadee, searchMatch, activeShareLinks, SHARE_EXPIRY_CHOICES, DEFAULT_SHARE_EXPIRY_HOURS } from "/hub-sdk.js";
-import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields } from "./logic.js";
+import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields, CATEGORY_LIMIT_MESSAGE, overCategoryLimit } from "./logic.js";
 
 const DB    = window.__DB_URL         ?? "";
 const STORE = window.__STORE_URL      ?? "";
@@ -363,6 +364,10 @@ let sortBy        = "title"; // "title" | "time"
 let formDifficulty = "medium";
 let formRating     = 0;
 let showCatForm    = false;
+let catSaving      = false; // a category save is in flight
+let saving         = false; // a recipe save is in flight
+let formError      = "";    // shown in the recipe form after a refused save
+let catLimitHit    = false; // the category limit line is showing in the form
 let shareOpen      = false; // share modal for currentRecipe
 let shareLinks     = [];    // active links for currentRecipe (from api/share/list)
 let shareBusy      = false;
@@ -397,12 +402,8 @@ async function db(sql, params = []) {
 
 // Atomic multi-statement form of /api/db — D1 runs a batch transactionally, so
 // the statements land whole or not at all. /api/db caps a batch at 25
-// statements; a recipe save is the row plus one link per category, so a recipe
-// with up to ~23 categories is a single atomic batch and anything larger spans
-// batches, losing atomicity only at that boundary (which is where every single
-// statement was before).
-const MAX_BATCH = 25;
-
+// statements; a recipe save is at most the row, the category clear and ten
+// links (logic.js MAX_RECIPE_CATEGORIES), so it is always a single batch.
 async function dbBatch(statements) {
   if (!DB || !statements.length) return [];
   const res = await fetch(DB, {
@@ -413,12 +414,6 @@ async function dbBatch(statements) {
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || typeof body !== "object" || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
   return body.results ?? [];
-}
-
-async function dbBatchAll(statements) {
-  for (let i = 0; i < statements.length; i += MAX_BATCH) {
-    await dbBatch(statements.slice(i, i + MAX_BATCH));
-  }
 }
 
 // ── Data loading ──────────────────────────────────────────────────────────────
@@ -523,6 +518,7 @@ window.toggleCatForm = function() {
 };
 
 window.addCatInline = async function() {
+  if (catSaving) return;
   const nameEl  = document.getElementById("new-cat-name");
   const colorEl = document.getElementById("new-cat-color");
   const name = nameEl?.value.trim();
@@ -531,7 +527,21 @@ window.addCatInline = async function() {
   const color = colorEl?.value ?? "#6366f1";
   const created_at = new Date().toISOString();
 
-  // Optimistic update — add locally and render immediately
+  // The form stays open until the hub has the category: a refused save says
+  // so in the form and leaves the name as typed, ready to send again.
+  const errEl = document.getElementById("new-cat-error");
+  if (errEl) errEl.hidden = true;
+  catSaving = true;
+  try {
+    await db(`INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
+      [id, name, color, created_at]);
+  } catch {
+    if (errEl) { errEl.textContent = "Couldn’t save the category — try again."; errEl.hidden = false; }
+    return;
+  } finally {
+    catSaving = false;
+  }
+
   const newCat = { id, name, color, created_at };
   categories.push(newCat);
   categories.sort((a, b) => a.name.localeCompare(b.name));
@@ -539,16 +549,6 @@ window.addCatInline = async function() {
   showCatForm = false;
   render();
   showToast(`"${name}" added`);
-
-  // Persist in the background
-  try {
-    await db(`INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
-      [id, name, color, created_at]);
-  } catch {
-    showToast("Failed to save category", "error");
-    await loadAll().catch(() => {});
-    render();
-  }
 };
 
 window.deleteCatInline = async function(id) {
@@ -558,7 +558,7 @@ window.deleteCatInline = async function(id) {
     await dbBatch([
       { sql: `DELETE FROM app_recipes__categories WHERE id = ?`, params: [id] },
       { sql: `DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, params: [id] },
-    ]);
+    ]).catch((e) => { console.error(e); throw new Error("Couldn’t delete the category — try again."); });
     if (navFilter === "cat:" + id) navFilter = "all";
     await loadAll();
     render();
@@ -573,7 +573,8 @@ async function toggleFavorite(id, currentVal) {
   try {
     await db(`UPDATE app_recipes__recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
   } catch (e) {
-    showToast(e.message, "error");
+    console.error(e);
+    showToast(newVal ? "Couldn’t add the favorite — try again." : "Couldn’t remove the favorite — try again.", "error");
     return;
   }
   const r = recipes.find(r => r.id === id);
@@ -584,12 +585,15 @@ async function toggleFavorite(id, currentVal) {
 
 // ── Recipe CRUD ───────────────────────────────────────────────────────────────
 async function saveRecipe() {
+  if (saving) return;
   captureFormFields();
   const title = document.getElementById("f-title")?.value.trim();
   if (!title) { document.getElementById("f-title")?.focus(); return; }
 
   const now = new Date().toISOString();
   const catIds = formFields.category_ids;
+  // Refused, not trimmed: which categories go is the cook's call.
+  if (overCategoryLimit(catIds.length)) { catLimitHit = false; formError = CATEGORY_LIMIT_MESSAGE; render(); return; }
   const data = {
     title,
     description:      document.getElementById("f-desc")?.value.trim()  ?? "",
@@ -606,7 +610,6 @@ async function saveRecipe() {
   const isNew   = !editingId;
   const recipeId = editingId ?? crypto.randomUUID();
 
-  // Optimistic update — patch local state and navigate immediately
   const optimisticRecipe = {
     ...data, id: recipeId, category_ids: catIds,
     is_favorite: isNew ? 0 : (recipes.find(r => r.id === recipeId)?.is_favorite ?? 0),
@@ -614,18 +617,12 @@ async function saveRecipe() {
     created_at: isNew ? now : (recipes.find(r => r.id === recipeId)?.created_at ?? now),
     updated_at: now,
   };
-  if (isNew) {
-    recipes.push(optimisticRecipe);
-  } else {
-    const idx = recipes.findIndex(r => r.id === recipeId);
-    if (idx !== -1) recipes[idx] = optimisticRecipe;
-  }
-  currentRecipe = optimisticRecipe;
-  editingId     = recipeId;
-  view = "browse"; rightView = "detail";
-  render();
 
-  // Persist in the background
+  // The form stays open until the hub has the recipe: a refused save says so
+  // in the form and leaves everything as typed, ready to send again.
+  saving = true; formError = "";
+  const saveBtn = document.getElementById("f-save");
+  if (saveBtn) saveBtn.disabled = true;
   try {
     // One transactional batch: the recipe row, the category clear, and every
     // category link. These were issued one statement at a time — an edit was
@@ -661,8 +658,28 @@ async function saveRecipe() {
         params: [recipeId, catId],
       });
     }
-    await dbBatchAll(statements);
+    await dbBatch(statements);
+  } catch {
+    formError = "Couldn’t save the recipe — try again.";
+    render();
+    return;
+  } finally {
+    saving = false;
+  }
 
+  if (isNew) {
+    recipes.push(optimisticRecipe);
+  } else {
+    const idx = recipes.findIndex(r => r.id === recipeId);
+    if (idx !== -1) recipes[idx] = optimisticRecipe;
+  }
+  currentRecipe = optimisticRecipe;
+  editingId     = recipeId;
+  view = "browse"; rightView = "detail";
+  render();
+
+  // The recipe is saved; what follows is the news of it and a fresh read.
+  try {
     // A new recipe is news; an edit to an existing one is not.
     if (isNew) {
       await publishEvent("recipe.added", recipeId, {
@@ -679,10 +696,7 @@ async function saveRecipe() {
     currentRecipe = recipes.find(r => r.id === recipeId) ?? currentRecipe;
     render();
   } catch {
-    showToast("Save failed — changes may not have been saved", "error");
-    await loadAll().catch(() => {});
-    currentRecipe = recipes.find(r => r.id === recipeId) ?? null;
-    render();
+    // The save itself landed; the page keeps showing what was saved.
   }
 }
 
@@ -692,7 +706,7 @@ async function deleteRecipe(id) {
     await dbBatch([
       { sql: `DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, params: [id] },
       { sql: `DELETE FROM app_recipes__recipes WHERE id = ?`, params: [id] },
-    ]);
+    ]).catch((e) => { console.error(e); throw new Error("Couldn’t delete the recipe — try again."); });
     // After the reload, so the list other apps read no longer holds the
     // deleted recipe.
     await loadAll();
@@ -729,6 +743,7 @@ function navHtml() {
         <button onclick="addCatInline()" class="btn btn-primary" style="flex:1;padding:5px 10px;font-size:0.8rem">Add</button>
         <button onclick="toggleCatForm()" class="btn btn-ghost" style="padding:5px 9px;font-size:0.85rem" aria-label="Cancel">${glyph("close")}</button>
       </div>
+      <div id="new-cat-error" class="save-error" role="alert" hidden></div>
     </div>` : "";
 
   return `
@@ -757,7 +772,7 @@ function listHtml() {
     const cats = (r.category_ids ?? []).map(id => categoryMap.get(id)).filter(Boolean);
     const fav = !!r.is_favorite;
     return `
-      <div class="recipe-card" onclick="openDetail('${sid(r.id)}')">
+      <div class="recipe-card" data-testid="recipe-card" onclick="openDetail('${sid(r.id)}')">
         <div class="recipe-card-body">
           <div class="recipe-card-title">${esc(r.title)}</div>
           <div class="recipe-card-meta">
@@ -790,7 +805,7 @@ function listHtml() {
       ${sortSelect}
     </div>
     <div class="recipe-grid">${cards}</div>
-    <button class="fab" onclick="openForm()" title="Add recipe">+</button>`;
+    <button class="fab" data-testid="new-recipe" onclick="openForm()" title="Add recipe">+</button>`;
 }
 
 function detailHtml() {
@@ -812,7 +827,7 @@ function detailHtml() {
           style="font-size:1.3rem;padding:6px 5px"
           onclick="doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">${glyph("heart", { accent: "currentColor" })}</button>
         ${share.enabled && isAdult(ME) ? `<button class="btn btn-ghost" onclick="openShare()">Share</button>` : ""}
-        <button class="btn btn-ghost" onclick="openEdit('${sid(r.id)}')">Edit</button>
+        <button class="btn btn-ghost" data-testid="edit-recipe" onclick="openEdit('${sid(r.id)}')">Edit</button>
         <button class="btn btn-danger" onclick="doDelete('${sid(r.id)}')">Delete</button>
       </div>
     </div>
@@ -899,7 +914,7 @@ function formHtml() {
 
   const catChecks = categories.length ? categories.map(c => `
     <label class="cat-check-label">
-      <input type="checkbox" name="f-cats" value="${esc(c.id)}"
+      <input type="checkbox" name="f-cats" value="${esc(c.id)}" onchange="onCatToggle(this)"
         ${formFields.category_ids.includes(c.id) ? "checked" : ""} />
       <span class="cat-dot" style="background:${esc(c.color)}"></span>
       ${esc(c.name)}
@@ -927,6 +942,7 @@ function formHtml() {
       <div class="field">
         <label>Categories</label>
         <div class="cat-checkboxes">${catChecks}</div>
+        <div id="f-cats-limit" class="save-error" role="alert" data-testid="cats-limit" ${catLimitHit ? "" : "hidden"}>${esc(CATEGORY_LIMIT_MESSAGE)}</div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="field" style="flex:1;min-width:110px">
@@ -970,9 +986,10 @@ function formHtml() {
         <label>Notes</label>
         <textarea id="f-notes" placeholder="Tips, variations, substitutions…">${esc(formFields.notes)}</textarea>
       </div>
+      ${formError ? `<div class="save-error" data-testid="save-error" role="alert">${esc(formError)}</div>` : ""}
       <div class="form-actions">
-        <button class="btn btn-ghost" onclick="cancelForm()">Cancel</button>
-        <button class="btn btn-primary" onclick="doSave()">Save</button>
+        <button class="btn btn-ghost" data-testid="cancel-recipe" onclick="cancelForm()">Cancel</button>
+        <button class="btn btn-primary" id="f-save" data-testid="save-recipe" onclick="doSave()">Save</button>
       </div>
     </div>`;
 }
@@ -1014,6 +1031,7 @@ window.openForm = function() {
   editingId = null; currentRecipe = null;
   formDifficulty = "medium"; formRating = 0;
   formFields = { title:"", description:"", category_ids:[], servings:"4", total_time_mins:"", source:"", ings:"", steps:"", notes:"" };
+  formError = ""; catLimitHit = false;
   view = "form"; render();
   setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
@@ -1038,6 +1056,7 @@ window.openEdit = async function(id) {
     steps:           currentRecipe.steps_text        ?? "",
     notes:           currentRecipe.notes             ?? "",
   };
+  formError = ""; catLimitHit = overCategoryLimit(formFields.category_ids.length);
   view = "form"; render();
   setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
@@ -1096,6 +1115,16 @@ window.doRevokeShare = async function(id) {
 window.setNav     = f  => { navFilter = f; rightView = "list"; render(); };
 window.setSearch  = q  => { searchQ  = q; render(); };
 window.setSortBy  = s  => { sortBy   = s; render(); };
+// An eleventh category is not taken. A recipe that already carries more than
+// ten keeps them all ticked until the cook unticks down to the limit.
+window.onCatToggle = function(box) {
+  const count = document.querySelectorAll('input[name="f-cats"]:checked').length;
+  const refused = box.checked && overCategoryLimit(count);
+  if (refused) box.checked = false;
+  catLimitHit = refused || overCategoryLimit(count);
+  const line = document.getElementById("f-cats-limit");
+  if (line) line.hidden = !catLimitHit;
+};
 window.setDiff    = d  => { captureFormFields(); formDifficulty = d; render(); };
 window.setRating  = n  => { captureFormFields(); formRating = formRating === n ? 0 : n; render(); };
 

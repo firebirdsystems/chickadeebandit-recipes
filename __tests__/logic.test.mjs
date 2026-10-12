@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatTime, difficultyLabel, difficultyColor, starDisplay, sortRecipes, searchableFields } from "../src/logic.js";
+import { formatTime, difficultyLabel, difficultyColor, starDisplay, sortRecipes, searchableFields, MAX_RECIPE_CATEGORIES, CATEGORY_LIMIT_MESSAGE, overCategoryLimit } from "../src/logic.js";
 
 describe("formatTime", () => {
   it("returns '' for zero/missing minutes", () => {
@@ -86,5 +86,23 @@ describe("searchableFields", () => {
     expect(searchableFields(recipe)).toEqual([
       "Chana Masala", "Weeknight curry", "chickpeas\ntomato\ngaram masala", "double the ginger",
     ]);
+  });
+});
+
+describe("category cap", () => {
+  it("allows up to ten categories and refuses the eleventh", () => {
+    expect(MAX_RECIPE_CATEGORIES).toBe(10);
+    expect(overCategoryLimit(0)).toBe(false);
+    expect(overCategoryLimit(10)).toBe(false);
+    expect(overCategoryLimit(11)).toBe(true);
+  });
+
+  it("keeps a recipe save inside one 25-statement batch", () => {
+    // Edit is the larger shape: UPDATE + DELETE links + one INSERT per category.
+    expect(2 + MAX_RECIPE_CATEGORIES).toBeLessThanOrEqual(25);
+  });
+
+  it("names the limit in its message", () => {
+    expect(CATEGORY_LIMIT_MESSAGE).toBe("A recipe can have up to 10 categories.");
   });
 });

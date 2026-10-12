@@ -32,3 +32,14 @@ export function sortRecipes(list, sort) {
   if (sort === "time")   return copy.sort((a, b) => (a.total_time_mins ?? 9999) - (b.total_time_mins ?? 9999) || a.title.localeCompare(b.title));
   return copy.sort((a, b) => a.title.localeCompare(b.title));
 }
+
+// A recipe save is ONE atomic write: the recipe row, the category clear on an
+// edit, and one link per category. The cap keeps that well inside the hub's
+// 25-statement batch (2 + 10 = 12 at most), so a save never spans batches.
+export const MAX_RECIPE_CATEGORIES = 10;
+export const CATEGORY_LIMIT_MESSAGE = `A recipe can have up to ${MAX_RECIPE_CATEGORIES} categories.`;
+
+// `count` is how many categories are selected, the one being weighed included.
+export function overCategoryLimit(count) {
+  return count > MAX_RECIPE_CATEGORIES;
+}

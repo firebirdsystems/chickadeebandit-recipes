@@ -1,0 +1,269 @@
+{
+  "scenarios": [
+    {
+      "name": "a recipe takes ten categories and no more, and one that already has eleven is refused until one is unticked",
+      "members": {
+        "cook": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__categories (id, name, color, created_at) VALUES (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now')), (?, ?, '#6b7280', datetime('now'))",
+          "params": [
+            "ui-c01",
+            "Shelf 01",
+            "ui-c02",
+            "Shelf 02",
+            "ui-c03",
+            "Shelf 03",
+            "ui-c04",
+            "Shelf 04",
+            "ui-c05",
+            "Shelf 05",
+            "ui-c06",
+            "Shelf 06",
+            "ui-c07",
+            "Shelf 07",
+            "ui-c08",
+            "Shelf 08",
+            "ui-c09",
+            "Shelf 09",
+            "ui-c10",
+            "Shelf 10",
+            "ui-c11",
+            "Shelf 11"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__recipes (id, title, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
+          "params": [
+            "ui-r1",
+            "Everything Stew",
+            "{{cook}}",
+            "Cook"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_recipes__recipe_categories (recipe_id, category_id) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)",
+          "params": [
+            "ui-r1",
+            "ui-c01",
+            "ui-r1",
+            "ui-c02",
+            "ui-r1",
+            "ui-c03",
+            "ui-r1",
+            "ui-c04",
+            "ui-r1",
+            "ui-c05",
+            "ui-r1",
+            "ui-c06",
+            "ui-r1",
+            "ui-c07",
+            "ui-r1",
+            "ui-c08",
+            "ui-r1",
+            "ui-c09",
+            "ui-r1",
+            "ui-c10",
+            "ui-r1",
+            "ui-c11"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"recipe-card\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"new-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"save-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c01\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c02\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c03\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c04\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c05\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c06\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c07\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c08\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c09\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c10\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 10,
+          "as": "cook"
+        },
+        {
+          "action": "expectHidden",
+          "selector": "[data-testid=\"cats-limit\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c11\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectText",
+          "selector": "[data-testid=\"cats-limit\"]",
+          "text": "A recipe can have up to 10 categories.",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 10,
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"cancel-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"recipe-card\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"edit-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"save-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 11,
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"save-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectText",
+          "selector": "[data-testid=\"save-error\"]",
+          "text": "A recipe can have up to 10 categories.",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 11,
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "input[name=\"f-cats\"][value=\"ui-c11\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 10,
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"save-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"edit-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "reload",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"recipe-card\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"recipe-card\"]",
+          "as": "cook"
+        },
+        {
+          "action": "click",
+          "selector": "[data-testid=\"edit-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "waitFor",
+          "selector": "[data-testid=\"save-recipe\"]",
+          "as": "cook"
+        },
+        {
+          "action": "expectCount",
+          "selector": "input[name=\"f-cats\"]:checked",
+          "count": 10,
+          "as": "cook"
+        }
+      ]
+    }
+  ]
+}
