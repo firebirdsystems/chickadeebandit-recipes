@@ -278,6 +278,8 @@
     .empty { text-align: center; padding: 48px 16px; color: var(--muted); }
     .empty-icon { margin-bottom: 10px; }
     .loading { text-align: center; padding: 48px; color: var(--muted); }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
 
     /* ── Mobile ── */
     @media (max-width: 580px) {
@@ -351,6 +353,7 @@ let view      = "browse"; // "browse" | "form"
 let rightView = "list";   // "list"   | "detail"  (only when view="browse")
 
 let recipes = [], categories = [], categoryMap = new Map();
+let loadFailed = false; // the recipes are unread: the first load failed and none has succeeded since
 let currentRecipe = null;
 let editingId     = null;
 let navFilter     = "all"; // "all" | "top_rated" | "favorites" | "cat:{id}" | "uncategorized"
@@ -387,8 +390,8 @@ async function db(sql, params = []) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error);
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
   return json;
 }
 
@@ -407,8 +410,8 @@ async function dbBatch(statements) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ statements }),
   });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body?.error ?? `batch failed (${res.status})`);
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || typeof body !== "object" || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
   return body.results ?? [];
 }
 
@@ -439,6 +442,7 @@ async function loadAll() {
     (rcMap[rc.recipe_id] ??= []).push(rc.category_id);
   }
   recipes = rRes.rows.map(r => ({ ...r, category_ids: rcMap[r.id] ?? [] }));
+  loadFailed = false;
 }
 
 async function loadRecipeFull(id) {
@@ -542,7 +546,7 @@ window.addCatInline = async function() {
       [id, name, color, created_at]);
   } catch {
     showToast("Failed to save category", "error");
-    await loadAll();
+    await loadAll().catch(() => {});
     render();
   }
 };
@@ -550,19 +554,28 @@ window.addCatInline = async function() {
 window.deleteCatInline = async function(id) {
   const name = categoryMap.get(id)?.name ?? "this category";
   if (!await hubConfirm({ message: `Delete "${name}"?`, confirmLabel: "Delete", destructive: true })) return;
-  await dbBatch([
-    { sql: `DELETE FROM app_recipes__categories WHERE id = ?`, params: [id] },
-    { sql: `DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, params: [id] },
-  ]);
-  if (navFilter === "cat:" + id) navFilter = "all";
-  await loadAll();
-  render();
+  try {
+    await dbBatch([
+      { sql: `DELETE FROM app_recipes__categories WHERE id = ?`, params: [id] },
+      { sql: `DELETE FROM app_recipes__recipe_categories WHERE category_id = ?`, params: [id] },
+    ]);
+    if (navFilter === "cat:" + id) navFilter = "all";
+    await loadAll();
+    render();
+  } catch (e) {
+    showToast(e.message, "error");
+  }
 };
 
 // ── Favorite toggle ───────────────────────────────────────────────────────────
 async function toggleFavorite(id, currentVal) {
   const newVal = currentVal ? 0 : 1;
-  await db(`UPDATE app_recipes__recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
+  try {
+    await db(`UPDATE app_recipes__recipes SET is_favorite = ? WHERE id = ?`, [newVal, id]);
+  } catch (e) {
+    showToast(e.message, "error");
+    return;
+  }
   const r = recipes.find(r => r.id === id);
   if (r) r.is_favorite = newVal;
   if (currentRecipe?.id === id) currentRecipe.is_favorite = newVal;
@@ -659,12 +672,15 @@ async function saveRecipe() {
       });
     }
 
-    await Promise.all([loadAll(), syncExport()]);
+    // The export is built from `recipes`, so it runs once the reload has
+    // replaced the list.
+    await loadAll();
+    await syncExport();
     currentRecipe = recipes.find(r => r.id === recipeId) ?? currentRecipe;
     render();
   } catch {
     showToast("Save failed — changes may not have been saved", "error");
-    await loadAll();
+    await loadAll().catch(() => {});
     currentRecipe = recipes.find(r => r.id === recipeId) ?? null;
     render();
   }
@@ -672,11 +688,19 @@ async function saveRecipe() {
 
 async function deleteRecipe(id) {
   if (!await hubConfirm({ message: "Delete this recipe?", confirmLabel: "Delete", destructive: true })) return;
-  await dbBatch([
-    { sql: `DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, params: [id] },
-    { sql: `DELETE FROM app_recipes__recipes WHERE id = ?`, params: [id] },
-  ]);
-  await Promise.all([loadAll(), syncExport()]);
+  try {
+    await dbBatch([
+      { sql: `DELETE FROM app_recipes__recipe_categories WHERE recipe_id = ?`, params: [id] },
+      { sql: `DELETE FROM app_recipes__recipes WHERE id = ?`, params: [id] },
+    ]);
+    // After the reload, so the list other apps read no longer holds the
+    // deleted recipe.
+    await loadAll();
+    await syncExport();
+  } catch (e) {
+    showToast(e.message, "error");
+    return;
+  }
   currentRecipe = null;
   rightView = "list";
   render();
@@ -747,13 +771,19 @@ function listHtml() {
         <button class="heart-btn${fav ? " on" : ""}" title="${fav ? "Remove from favorites" : "Add to favorites"}"
           onclick="event.stopPropagation();doToggleFav('${sid(r.id)}',${fav ? 1 : 0})">${glyph("heart", { accent: "currentColor" })}</button>
       </div>`;
-  }).join("") : `
+  }).join("") : loadFailed ? "" : `
     <div class="empty">
       <div class="empty-icon">${chickadee(searchQ ? "searching" : "nest")}</div>
       <p>${searchQ ? "No recipes match your search." : navFilter === "favorites" ? `No favorites yet — click ${glyph("heart")} on a recipe.` : "No recipes here yet."}</p>
     </div>`;
 
+  // While the recipes are unread the banner stands in for the empty state.
+  const loadError = loadFailed
+    ? `<div class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load your recipes.</span> <button type="button" class="load-error-retry" data-testid="load-retry" onclick="retryLoad()">Try again</button></div>`
+    : "";
+
   return `
+    ${loadError}
     <div class="search-row">
       <input class="search-input" type="text" placeholder="Search recipes…"
         value="${esc(searchQ)}" oninput="setSearch(this.value)" autocomplete="off" />
@@ -969,7 +999,12 @@ function render() {
 
 // ── Window globals ────────────────────────────────────────────────────────────
 window.openDetail = async function(id) {
-  currentRecipe = await loadRecipeFull(id);
+  try {
+    currentRecipe = await loadRecipeFull(id);
+  } catch (e) {
+    showToast(e.message, "error");
+    return;
+  }
   rightView = "detail"; shareOpen = false; render();
 };
 window.goList = function() {
@@ -983,7 +1018,12 @@ window.openForm = function() {
   setTimeout(() => document.getElementById("f-title")?.focus(), 0);
 };
 window.openEdit = async function(id) {
-  currentRecipe  = await loadRecipeFull(id);
+  try {
+    currentRecipe  = await loadRecipeFull(id);
+  } catch (e) {
+    showToast(e.message, "error");
+    return;
+  }
   editingId      = id;
   formDifficulty = currentRecipe.difficulty ?? "medium";
   formRating     = currentRecipe.rating ?? 0;
@@ -1059,6 +1099,14 @@ window.setSortBy  = s  => { sortBy   = s; render(); };
 window.setDiff    = d  => { captureFormFields(); formDifficulty = d; render(); };
 window.setRating  = n  => { captureFormFields(); formRating = formRating === n ? 0 : n; render(); };
 
+window.retryLoad = async function() {
+  try {
+    await loadAll();
+    syncExport();
+  } catch { /* the banner stays */ }
+  render();
+};
+
 // ── Toast ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg, type = "") {
@@ -1085,8 +1133,14 @@ function handleDeepLink() {
       { id:"demo-3", title:"Chicken Tikka Masala",difficulty:"hard",   servings:4, total_time_mins:90, rating:5, category_id:null, is_favorite:0 },
     ];
   } else {
-    await loadAll();
-    syncExport();
+    // A failed read still draws the page, under a banner that stays until a
+    // read succeeds.
+    try {
+      await loadAll();
+      syncExport();
+    } catch {
+      loadFailed = true;
+    }
   }
   render();
   handleDeepLink();
