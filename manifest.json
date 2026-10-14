@@ -78,9 +78,6 @@
     "default_audience": "everyone",
     "requires_approval": false
   },
-  "resource_limits": {
-    "max_db_bytes": 104857600
-  },
   "member_references": {
     "recipes": {
       "column": "created_by_id",
