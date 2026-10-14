@@ -319,7 +319,7 @@
 
 <script type="module">
 import { esc, hubConfirm, crossWrite, isAdult, createShareHelper, glyph, chickadee, searchMatch, activeShareLinks, SHARE_EXPIRY_CHOICES, DEFAULT_SHARE_EXPIRY_HOURS } from "/hub-sdk.js";
-import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields, CATEGORY_LIMIT_MESSAGE, overCategoryLimit } from "./logic.js";
+import { formatTime, difficultyLabel, starDisplay, sortRecipes, searchableFields, CATEGORY_LIMIT_MESSAGE, overCategoryLimit, shareFailureLine } from "./logic.js";
 
 const DB    = window.__DB_URL         ?? "";
 const STORE = window.__STORE_URL      ?? "";
@@ -1084,16 +1084,21 @@ window.closeShare = function() {
 window.doCreateShare = async function() {
   const hours = Number(document.getElementById("share-expiry")?.value) || undefined;
   shareBusy = true; render();
+  let link;
   try {
-    const link = await share.create("recipe", currentRecipe.id, { expiresInHours: hours, label: currentRecipe.title });
-    shareLinks = (await share.listAll()).links;
-    shareBusy = false; render();
-    try { await navigator.clipboard.writeText(link.url); showToast("Link created and copied"); }
-    catch { showToast("Link created"); }
+    link = await share.create("recipe", currentRecipe.id, { expiresInHours: hours, label: currentRecipe.title });
   } catch (err) {
+    console.error(err);
     shareBusy = false; render();
-    showToast(err.message, "error");
+    showToast(shareFailureLine(err, { action: "create the share link", thing: "recipe" }), "error");
+    return;
   }
+  // The link exists now; a failed list re-read must not read as a failed create.
+  // A refused list read comes back EMPTY (`limits: null`): keep what is on screen rather than draw "none".
+  try { const st = await share.listAll(); if (st.limits !== null) shareLinks = st.links; } catch (err) { console.error(err); }
+  shareBusy = false; render();
+  try { await navigator.clipboard.writeText(link.url); showToast("Link created and copied"); }
+  catch { showToast("Link created"); }
 };
 window.doCopyShare = async function(id) {
   const link = shareLinks.find(l => l.id === id);
@@ -1103,14 +1108,19 @@ window.doCopyShare = async function(id) {
 };
 window.doRevokeShare = async function(id) {
   if (!await hubConfirm("Revoke this share link?", { description: "Anyone using it will immediately lose access.", confirmLabel: "Revoke" })) return;
-  try {
-    await share.revoke(id);
-    shareLinks = (await share.listAll()).links;
-    render();
-    showToast("Link revoked");
-  } catch (err) {
-    showToast(err.message, "error");
+  try { await share.revoke(id); }
+  catch (err) {
+    console.error(err);
+    // A 404 is a link the hub no longer has: done; the refresh below drops it.
+    if (err?.status !== 404) { showToast(shareFailureLine(err, { action: "revoke the share link", thing: "recipe" }), "error"); return; }
   }
+  shareLinks = shareLinks.filter(l => l.id !== id);
+  // A refused list read comes back EMPTY (`limits: null`): keep what is on screen rather than draw "none".
+  try { const st = await share.listAll(); if (st.limits !== null) shareLinks = st.links; } catch (err) { console.error(err); }
+  render();
+  // The hub's 404 also covers another member's link it would not let this one revoke.
+  if (activeShareLinks(shareLinks).some(l => l.id === id)) showToast("You don’t have permission to revoke the share link.", "error");
+  else showToast("Link revoked");
 };
 window.setNav     = f  => { navFilter = f; rightView = "list"; render(); };
 window.setSearch  = q  => { searchQ  = q; render(); };
